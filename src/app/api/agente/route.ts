@@ -54,7 +54,10 @@ export async function POST(request: NextRequest) {
       messages: await convertToModelMessages(recientes),
       tools: toolsInventario,
       stopWhen: isStepCount(6),
-      onStepFinish: () => { pasos++; },
+      onStepFinish: ({ response, finishReason }) => {
+        pasos++;
+        console.info(`[agente] paso ${pasos}: ${response.modelId} (${finishReason})`);
+      },
       onFinish: ({ totalUsage }) => {
         console.info(
           `[agente] ${MODELO_AGENTE} · ${((Date.now() - inicio) / 1000).toFixed(1)}s · ${pasos} pasos · ` +

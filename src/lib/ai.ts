@@ -14,21 +14,31 @@ type NivelRazonamiento = NonNullable<NonNullable<GoogleLanguageModelOptions["thi
 const NIVELES: readonly NivelRazonamiento[] = ["minimal", "low", "medium", "high"];
 const nivelEnv = process.env.AGENTE_RAZONAMIENTO as NivelRazonamiento;
 
-/** Modelo principal (Gemini 3+). Acepta thinkingLevel. */
-export const MODELO_AGENTE = process.env.AGENTE_MODELO || "gemini-flash-latest";
-/** Respaldo estable (Gemini 2.5) para cuando el principal está saturado. */
-export const MODELO_RESPALDO = process.env.AGENTE_MODELO_RESPALDO || "gemini-2.5-flash";
+/**
+ * Principal y respaldo deben ser de la MISMA familia: Gemini 3+ firma las llamadas a
+ * herramientas y un modelo 2.5 rechaza ese historial a mitad de una respuesta.
+ * Se usa 2.5 por estabilidad (menos saturación) y porque no requiere razonamiento.
+ */
+export const MODELO_AGENTE = process.env.AGENTE_MODELO || "gemini-2.5-flash";
+export const MODELO_RESPALDO = process.env.AGENTE_MODELO_RESPALDO || "gemini-2.5-flash-lite";
 
 /**
- * Cuánto "piensa" el modelo principal. "low" es el nivel más bajo que aceptan todos los
- * Gemini 3+ ("minimal" no lo soportan algunos). Para inventario es suficiente y rápido.
+ * Solo aplica a Gemini 3+. "low" es el nivel más bajo que aceptan todos
+ * ("minimal" no lo soportan algunos). Gemini 2.5 corre sin razonamiento.
  */
 const RAZONAMIENTO: NivelRazonamiento = NIVELES.includes(nivelEnv) ? nivelEnv : "low";
 
-function conOpciones(modelId: string, google_: GoogleLanguageModelOptions): Modelo {
+/** Gemini 2.5 usa thinkingBudget (0 = sin razonamiento); Gemini 3+ usa thinkingLevel. */
+function opcionesRazonamiento(modelId: string): GoogleLanguageModelOptions {
+  return modelId.startsWith("gemini-2.")
+    ? { thinkingConfig: { thinkingBudget: 0, includeThoughts: false } }
+    : { thinkingConfig: { thinkingLevel: RAZONAMIENTO, includeThoughts: false } };
+}
+
+function conOpciones(modelId: string): Modelo {
   return wrapLanguageModel({
     model: google(modelId),
-    middleware: defaultSettingsMiddleware({ settings: { providerOptions: { google: google_ } } }),
+    middleware: defaultSettingsMiddleware({ settings: { providerOptions: { google: opcionesRazonamiento(modelId) } } }),
   });
 }
 
@@ -76,11 +86,9 @@ function conRespaldo(principal: Modelo, respaldos: { id: string; modelo: Modelo 
 let instancia: Modelo | null = null;
 
 export function modeloAgente(): Modelo {
-  instancia ??= conRespaldo(
-    conOpciones(MODELO_AGENTE, { thinkingConfig: { thinkingLevel: RAZONAMIENTO, includeThoughts: false } }),
-    // Gemini 2.5 usa thinkingBudget (0 = sin razonamiento) en lugar de thinkingLevel.
-    [{ id: MODELO_RESPALDO, modelo: conOpciones(MODELO_RESPALDO, { thinkingConfig: { thinkingBudget: 0, includeThoughts: false } }) }],
-  );
+  instancia ??= conRespaldo(conOpciones(MODELO_AGENTE), [
+    { id: MODELO_RESPALDO, modelo: conOpciones(MODELO_RESPALDO) },
+  ]);
   return instancia;
 }
 
