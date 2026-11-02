@@ -9,7 +9,7 @@ import {
   type UIMessage,
 } from "ai";
 import { autenticar, ErrorApi, ROLES_OPERATIVOS, verificarMismoOrigen } from "@/lib/api-auth";
-import { iaConfigurada, MODELO_AGENTE, modeloAgente, opcionesProveedor } from "@/lib/ai";
+import { iaConfigurada, MODELO_AGENTE, modeloAgente } from "@/lib/ai";
 import { toolsInventario } from "@/features/agente/tools-inventario";
 import { instruccionesInventario } from "@/features/agente/instrucciones";
 import { describirErrorIA } from "@/features/agente/errores";
@@ -48,7 +48,8 @@ export async function POST(request: NextRequest) {
     let pasos = 0;
     const result = streamText({
       model: modeloAgente(),
-      providerOptions: opcionesProveedor(),
+      // El respaldo de modelo ya reintenta; un solo reintento extra evita esperas largas.
+      maxRetries: 1,
       instructions: instruccionesInventario(usuario),
       messages: await convertToModelMessages(recientes),
       tools: toolsInventario,
