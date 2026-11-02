@@ -9,7 +9,7 @@ import {
   type UIMessage,
 } from "ai";
 import { autenticar, ErrorApi, ROLES_OPERATIVOS, verificarMismoOrigen } from "@/lib/api-auth";
-import { iaConfigurada, modeloAgente } from "@/lib/ai";
+import { iaConfigurada, MODELO_AGENTE, modeloAgente, opcionesProveedor } from "@/lib/ai";
 import { toolsInventario } from "@/features/agente/tools-inventario";
 import { instruccionesInventario } from "@/features/agente/instrucciones";
 
@@ -43,12 +43,23 @@ export async function POST(request: NextRequest) {
     const primeroUsuario = recientes.findIndex(m => m.role === "user");
     recientes = primeroUsuario >= 0 ? recientes.slice(primeroUsuario) : recientes;
 
+    const inicio = Date.now();
+    let pasos = 0;
     const result = streamText({
       model: modeloAgente(),
+      providerOptions: opcionesProveedor(),
       instructions: instruccionesInventario(usuario),
       messages: await convertToModelMessages(recientes),
       tools: toolsInventario,
       stopWhen: isStepCount(6),
+      onStepFinish: () => { pasos++; },
+      onFinish: ({ totalUsage }) => {
+        console.info(
+          `[agente] ${MODELO_AGENTE} · ${((Date.now() - inicio) / 1000).toFixed(1)}s · ${pasos} pasos · ` +
+          `${totalUsage.inputTokens ?? "?"} tokens entrada / ${totalUsage.outputTokens ?? "?"} salida`,
+        );
+      },
+      onError: ({ error }) => console.error("[agente] Error del modelo:", error),
     });
 
     return createUIMessageStreamResponse({

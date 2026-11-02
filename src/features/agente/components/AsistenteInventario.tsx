@@ -32,6 +32,8 @@ export default function AsistenteInventario() {
   });
 
   const ocupado = status === "submitted" || status === "streaming";
+  const ultimo = messages.at(-1);
+  const ultimoTieneTexto = ultimo?.role === "assistant" && ultimo.parts.some(p => p.type === "text" && p.text.length > 0);
 
   const enviar = useCallback((texto: string) => {
     const limpio = texto.trim();
@@ -126,7 +128,7 @@ export default function AsistenteInventario() {
           </div>
         ))}
 
-        {status === "submitted" && (
+        {(status === "submitted" || (status === "streaming" && !ultimoTieneTexto)) && (
           <div className="flex items-center gap-2 text-xs text-slate-400 px-1">
             <Loader2 className="w-3.5 h-3.5 animate-spin" /> Pensando…
           </div>
