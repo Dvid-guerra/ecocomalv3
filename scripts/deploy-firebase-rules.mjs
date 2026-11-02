@@ -1,13 +1,22 @@
 import { readFile } from "node:fs/promises";
-import { applicationDefault } from "firebase-admin/app";
+import { applicationDefault, cert } from "firebase-admin/app";
 
 const firebaseConfig = JSON.parse(
   await readFile(new URL("../.firebaserc", import.meta.url), "utf8"),
 );
-const projectId = process.env.FIREBASE_PROJECT_ID ?? firebaseConfig.projects?.default;
+const projectId =
+  process.env.FIREBASE_PROJECT_ID ??
+  process.env.FIREBASE_ADMIN_PROJECT_ID ??
+  firebaseConfig.projects?.default;
 if (!projectId) throw new Error("No se encontró el ID del proyecto Firebase.");
 
-const credential = applicationDefault();
+// Usa la cuenta de servicio de .env.local; si no está, cae a las credenciales de gcloud.
+const { FIREBASE_ADMIN_CLIENT_EMAIL: clientEmail, FIREBASE_ADMIN_PRIVATE_KEY: rawKey } = process.env;
+const credential = clientEmail && rawKey
+  ? cert({ projectId, clientEmail, privateKey: rawKey.replace(/\\n/g, "\n") })
+  : applicationDefault();
+
+console.log(`Desplegando reglas en el proyecto: ${projectId}`);
 const token = await credential.getAccessToken();
 const baseUrl = `https://firebaserules.googleapis.com/v1/projects/${projectId}`;
 
@@ -66,6 +75,7 @@ async function deployRules(fileName, releaseId) {
 }
 
 await deployRules("firestore.rules", "cloud.firestore");
-const storageBucket = process.env.FIREBASE_STORAGE_BUCKET;
+const storageBucket =
+  process.env.FIREBASE_STORAGE_BUCKET ?? process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
 if (!storageBucket) throw new Error("Falta FIREBASE_STORAGE_BUCKET.");
 await deployRules("storage.rules", `firebase.storage/${storageBucket}`);
