@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { db } from "@/lib/firebase";
-import { collection, onSnapshot, doc, setDoc } from "firebase/firestore";
+import { guardarReceta, suscribirRecetas } from "@/features/inventory/services/recetas";
 import { Trash2, Save, Wand2, Edit3, X, Plus, ChevronDown, ChevronRight, PackageOpen } from "lucide-react";
 import type { Material, ProductoReceta, RecetaPieza } from "@/types";
 import { MODELOS } from "@/types";
@@ -18,10 +17,7 @@ export default function TabRecetas({ materiales }: { materiales: Material[] }) {
   const [expandedPieza, setExpandedPieza] = useState<number | null>(null);
 
   useEffect(() => {
-    const unSub = onSnapshot(collection(db, "recetas"), (snap) => {
-      setRecetas(snap.docs.map(d => ({ id: d.id, ...d.data() } as ProductoReceta)));
-    });
-    return () => unSub();
+    return suscribirRecetas(setRecetas);
   }, []);
 
   const openEditor = (modelo: string) => {
@@ -69,11 +65,7 @@ export default function TabRecetas({ materiales }: { materiales: Material[] }) {
   const handleSaveRecipe = async () => {
     if (!editingModel) return;
     try {
-      await setDoc(doc(db, "recetas", editingModel), {
-        id: editingModel,
-        modelo: editingModel,
-        piezas: draftPiezas
-      });
+      await guardarReceta(editingModel, draftPiezas);
       setEditingModel(null);
     } catch {
       alert("Error al guardar receta");
@@ -123,15 +115,19 @@ export default function TabRecetas({ materiales }: { materiales: Material[] }) {
         }
       ];
 
-      for (const r of recetasData) {
-        await setDoc(doc(db, "recetas", r.modelo), {
-          id: r.modelo,
-          modelo: r.modelo,
-          piezas: r.piezas
-        });
+      // Nunca sobrescribir recetas que ya existen (podrían tener materiales cargados).
+      const pendientes = recetasData.filter(r => !recetas.some(x => x.modelo === r.modelo && x.piezas?.length));
+      if (pendientes.length === 0) {
+        alert("Todos los modelos ya tienen receta. No se modificó nada.");
+        return;
+      }
+      if (!confirm(`Se crearán las piezas base para: ${pendientes.map(r => r.modelo).join(", ")}. Las recetas existentes no se tocan. ¿Continuar?`)) return;
+
+      for (const r of pendientes) {
+        await guardarReceta(r.modelo, r.piezas);
       }
 
-      alert("Las recetas base estructuradas por piezas han sido inyectadas. Entra a editarlas para agregarles insumos.");
+      alert("Piezas base creadas. Entra a cada modelo para agregarles sus materiales.");
     } catch {
       alert("Error al inyectar recetas.");
     }

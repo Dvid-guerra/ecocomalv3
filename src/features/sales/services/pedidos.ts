@@ -1,6 +1,8 @@
 import { doc, runTransaction } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { EstadoPedido, Material, Pedido, ProductoReceta } from "@/types";
+import { calcularMaterialesRequeridos, recetaTieneMateriales } from "@/features/inventory/domain/recetas";
+import { COLECCION_RECETAS } from "@/features/inventory/services/recetas";
 import {
   aplicarMovimientoEnTransaccion,
   type UsuarioMovimiento,
@@ -20,19 +22,6 @@ export class RecetaNoConfiguradaError extends Error {
   }
 }
 
-function calcularMateriales(receta: ProductoReceta, cantidad: number) {
-  const totales = new Map<string, number>();
-  for (const pieza of receta.piezas ?? []) {
-    const cantidadPieza = (pieza.cantidadPieza || 1) * cantidad;
-    for (const insumo of pieza.insumos ?? []) {
-      if (!insumo.materialId) continue;
-      const requerida = insumo.cantidadReq * cantidadPieza;
-      totales.set(insumo.materialId, (totales.get(insumo.materialId) ?? 0) + requerida);
-    }
-  }
-  return totales;
-}
-
 export async function actualizarEstadoPedido(
   pedido: Pedido,
   nuevoEstado: EstadoPedido,
@@ -50,14 +39,15 @@ export async function actualizarEstadoPedido(
       return [];
     }
 
-    const recetaRef = doc(db, "recetas", pedido.modelo);
+    const recetaRef = doc(db, COLECCION_RECETAS, pedido.modelo);
     const recetaSnap = await transaction.get(recetaRef);
     if (!recetaSnap.exists()) throw new RecetaNoConfiguradaError(pedido.modelo);
 
     const receta = { id: recetaSnap.id, ...recetaSnap.data() } as ProductoReceta;
-    if (!receta.piezas?.length) throw new RecetaNoConfiguradaError(pedido.modelo);
+    // Sin materiales ligados no habría nada que descontar: se exige receta completa.
+    if (!recetaTieneMateriales(receta)) throw new RecetaNoConfiguradaError(pedido.modelo);
 
-    const requeridos = calcularMateriales(receta, pedido.cantidad);
+    const requeridos = calcularMaterialesRequeridos(receta, pedido.cantidad);
     const materialRefs = [...requeridos.keys()].map(id => doc(db, "materiales", id));
     const materialSnaps = await Promise.all(materialRefs.map(ref => transaction.get(ref)));
     const faltantes: FaltanteProduccion[] = [];

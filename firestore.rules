@@ -103,9 +103,10 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // Colección anterior de Planta: congelada. La fuente única de recetas es /recetas.
     match /productos_recetas/{id} {
-      allow read: if active();
-      allow write: if operational();
+      allow read: if operational();
+      allow write: if false;
     }
 
     match /planificacion_semanal/{id} {

@@ -25,6 +25,8 @@ import {
   type Material,
   type ProductoReceta,
 } from "@/types";
+import { suscribirRecetas } from "@/features/inventory/services/recetas";
+import { calcularCostoUnitario } from "@/features/inventory/domain/recetas";
 import {
   ArrowLeft,
   FileText,
@@ -1378,32 +1380,16 @@ function ConfiguracionFinanciera() {
     const unsubMat = onSnapshot(collection(db, "materiales"), (snap) => {
       setMateriales(snap.docs.map(d => ({ id: d.id, ...d.data() } as Material)));
     });
-    const unsubRec = onSnapshot(collection(db, "recetas"), (snap) => {
-      setRecetas(snap.docs.map(d => ({ id: d.id, ...d.data() } as ProductoReceta)));
-    });
+    const unsubRec = suscribirRecetas(setRecetas);
 
     return () => { unsubConf(); unsubMat(); unsubRec(); };
   }, []);
 
   const calcularCostoVariable = useCallback((modelo: string) => {
     const receta = recetas.find(r => r.modelo === modelo);
-    if (!receta || !receta.piezas) return 0;
-    
-    let totalCosto = 0;
-    receta.piezas.forEach(pieza => {
-      const cantPieza = pieza.cantidadPieza || 1;
-      let costoPieza = 0;
-      if (pieza.insumos) {
-        pieza.insumos.forEach(insumo => {
-          const mat = materiales.find(m => m.id === insumo.materialId);
-          if (mat && mat.precioEstimado) {
-            costoPieza += insumo.cantidadReq * mat.precioEstimado;
-          }
-        });
-      }
-      totalCosto += costoPieza * cantPieza;
-    });
-    return totalCosto;
+    if (!receta) return 0;
+    const precios = new Map(materiales.map(m => [m.id, Number(m.precioEstimado) || 0]));
+    return calcularCostoUnitario(receta, precios);
   }, [materiales, recetas]);
 
   const costosPorModelo = useMemo(() => {

@@ -37,11 +37,9 @@ import {
   ChevronLeft,
   ChevronRight,
   Users,
-  Box,
   Flame,
   Truck,
   MoreHorizontal,
-  PlusCircle,
   Save,
   Trash2,
   UserPlus
@@ -54,13 +52,13 @@ import {
   PrioridadTarea as Prioridad,
   StockItem,
   Movimiento,
-  RecetaInsumo,
   UsuarioReal,
   TareaReal,
   BloqueSemanal,
   DIAS_SEMANA,
   HORAS_JORNADA_SEMANAL
 } from "@/types";
+import ResumenRecetas from "@/features/inventory/components/ResumenRecetas";
 import {
   registrarMovimientoStock,
   StockInsuficienteError,
@@ -101,13 +99,6 @@ const PRIORIDAD_COLORS: Record<Prioridad, string> = {
   Baja: "bg-slate-100 text-slate-600 ring-1 ring-slate-200/60",
 };
 
-interface ProductoAjustes {
-  id: string;
-  nombre: string;
-  descripcion: string;
-  insumos: RecetaInsumo[];
-}
-
 /* ═══════════════════════════════════════════════════════
    PÁGINA PRINCIPAL
 ═══════════════════════════════════════════════════════ */
@@ -129,17 +120,6 @@ export default function PlantaPage() {
 
   // ── ESTADOS: AJUSTES (Firebase Real) ──
   const [ajustesTab, setAjustesTab] = useState<AjustesTab>("recetas");
-
-  // Ajustes -> Recetas
-  const [productos, setProductos] = useState<ProductoAjustes[]>([]);
-  const [prodExpandido, setProdExpandido] = useState<string | null>(null);
-  
-  // Formulario Insumos
-  const [nuevoInsumo, setNuevoInsumo] = useState<RecetaInsumo>({ nombre: "", cantidadReq: 1, unidad: "uds" });
-  
-  // Formulario Nuevo Producto
-  const [creandoProducto, setCreandoProducto] = useState(false);
-  const [formProducto, setFormProducto] = useState({ nombre: "", descripcion: "" });
 
   // Ajustes -> Tareas y Empleados
   const [areaSeleccionada, setAreaSeleccionada] = useState<AreaPlanta | "">("");
@@ -181,18 +161,6 @@ export default function PlantaPage() {
         areaPlanta: d.data().areaPlanta ?? "",
       }));
       setColaboradores(lista);
-    });
-
-    // 2. Escuchar Productos/Recetas
-    const qProductos = collection(db, "productos_recetas");
-    const unsubProductos = onSnapshot(qProductos, (snap) => {
-      const lista: ProductoAjustes[] = snap.docs.map(d => ({
-        id: d.id,
-        nombre: d.data().nombre ?? "",
-        descripcion: d.data().descripcion ?? "",
-        insumos: d.data().insumos ?? [],
-      }));
-      setProductos(lista);
     });
 
     // 3. Escuchar Tareas
@@ -258,7 +226,6 @@ export default function PlantaPage() {
 
     return () => {
       unsubUsuarios();
-      unsubProductos();
       unsubTareas();
       unsubStock();
       unsubMovs();
@@ -352,60 +319,6 @@ export default function PlantaPage() {
     } catch (e) {
       console.error(e);
       alert("Error al borrar la tarea.");
-    }
-  };
-
-  // ── LÓGICA: RECETAS FIREBASE ──
-  const handleCrearProducto = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!formProducto.nombre.trim()) return;
-    try {
-      await addDoc(collection(db, "productos_recetas"), {
-        nombre: formProducto.nombre.trim(),
-        descripcion: formProducto.descripcion.trim(),
-        insumos: [],
-      });
-      setFormProducto({ nombre: "", descripcion: "" });
-      setCreandoProducto(false);
-    } catch (e) {
-      console.error(e);
-      alert("Error al crear producto.");
-    }
-  };
-
-  const handleEliminarProducto = async (id: string) => {
-    if(!confirm("¿Estás seguro de eliminar este producto?")) return;
-    try {
-      await deleteDoc(doc(db, "productos_recetas", id));
-    } catch(e) {
-      console.error(e);
-    }
-  };
-
-  const handleAgregarInsumo = async (e: React.FormEvent<HTMLFormElement>, productoId: string, currentInsumos: RecetaInsumo[]) => {
-    e.preventDefault();
-    if (!nuevoInsumo.nombre?.trim()) return;
-    try {
-      const actualizado = [...currentInsumos, { ...nuevoInsumo }];
-      await updateDoc(doc(db, "productos_recetas", productoId), {
-        insumos: actualizado
-      });
-      setNuevoInsumo({ nombre: "", cantidadReq: 1, unidad: "uds" });
-    } catch (e) {
-      console.error(e);
-      alert("Error al agregar insumo.");
-    }
-  };
-
-  const handleEliminarInsumo = async (productoId: string, currentInsumos: RecetaInsumo[], indexToDelete: number) => {
-    try {
-      const actualizado = currentInsumos.filter((_, i) => i !== indexToDelete);
-      await updateDoc(doc(db, "productos_recetas", productoId), {
-        insumos: actualizado
-      });
-    } catch (e) {
-      console.error(e);
-      alert("Error al eliminar insumo.");
     }
   };
 
@@ -665,140 +578,7 @@ export default function PlantaPage() {
             </div>
 
             {/* ── SUBVISTA: RECETAS ── */}
-            {ajustesTab === "recetas" && (
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-lg font-bold text-slate-900">Catálogo de Productos y Recetas</h2>
-                    <p className="text-sm text-slate-500">Define los insumos necesarios para fabricar cada modelo.</p>
-                  </div>
-                  <button 
-                    onClick={() => setCreandoProducto(!creandoProducto)}
-                    className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white text-sm font-medium rounded-xl hover:bg-slate-800 transition-colors"
-                  >
-                    <PlusCircle className="w-4 h-4" strokeWidth={2} />
-                    Nuevo Producto
-                  </button>
-                </div>
-
-                {creandoProducto && (
-                  <form onSubmit={handleCrearProducto} className="bg-white p-5 rounded-2xl ring-1 ring-slate-200/60 shadow-sm space-y-4">
-                    <h3 className="text-sm font-bold text-slate-800">Agregar Nuevo Producto a Base de Datos</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <input 
-                        type="text" placeholder="Nombre del Producto (ej. Ecocina Premium)" 
-                        value={formProducto.nombre} onChange={e => setFormProducto(p => ({...p, nombre: e.target.value}))}
-                        className={inputCls} required 
-                      />
-                      <input 
-                        type="text" placeholder="Descripción breve" 
-                        value={formProducto.descripcion} onChange={e => setFormProducto(p => ({...p, descripcion: e.target.value}))}
-                        className={inputCls} 
-                      />
-                    </div>
-                    <div className="flex justify-end gap-2">
-                      <button type="button" onClick={() => setCreandoProducto(false)} className="px-4 py-2 text-sm font-semibold text-slate-500 hover:bg-slate-100 rounded-xl transition-colors">Cancelar</button>
-                      <button type="submit" className="px-4 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-colors flex items-center gap-2">
-                        <Save className="w-4 h-4" /> Guardar Producto
-                      </button>
-                    </div>
-                  </form>
-                )}
-
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                  {productos.map((prod) => {
-                    const isExpanded = prodExpandido === prod.id;
-                    return (
-                      <div key={prod.id} className="bg-white ring-1 ring-slate-200/80 rounded-3xl overflow-hidden transition-all duration-300">
-                        {/* Cabecera Tarjeta */}
-                        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 px-6 py-5 cursor-pointer hover:bg-slate-50/50" onClick={() => setProdExpandido(isExpanded ? null : prod.id)}>
-                          <div className="flex items-start gap-4">
-                            <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
-                              <Box className="w-5 h-5" strokeWidth={1.5} />
-                            </div>
-                            <div>
-                              <h3 className="text-base font-bold text-slate-900">{prod.nombre}</h3>
-                              <p className="text-xs text-slate-500 mt-1">{prod.descripcion}</p>
-                              <p className="text-xs font-semibold text-indigo-600 mt-2">
-                                {prod.insumos.length} Insumos en receta
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <button 
-                              onClick={(e) => { e.stopPropagation(); handleEliminarProducto(prod.id); }}
-                              className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                            <div className={`p-2 rounded-lg text-slate-400 transition-transform ${isExpanded ? "rotate-180 bg-slate-100" : "hover:bg-slate-100"}`}>
-                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                              </svg>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Receta Desplegada */}
-                        {isExpanded && (
-                          <div className="border-t border-slate-100 bg-slate-50/50 px-6 py-5">
-                            <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3">Lista de Materiales</h4>
-                            
-                            <div className="space-y-2 mb-4">
-                              {prod.insumos.map((ins, idx: number) => (
-                                <div key={idx} className="flex items-center justify-between bg-white px-4 py-2.5 rounded-xl ring-1 ring-slate-200/60">
-                                  <span className="text-sm font-medium text-slate-800">{ins.nombre}</span>
-                                  <div className="flex items-center gap-4">
-                                    <span className="text-sm font-mono font-bold text-slate-900">
-                                      {ins.cantidadReq} <span className="text-xs text-slate-500 font-sans">{ins.unidad}</span>
-                                    </span>
-                                    <button onClick={() => handleEliminarInsumo(prod.id, prod.insumos, idx)} className="text-slate-400 hover:text-red-500 transition-colors">
-                                      <Trash2 className="w-4 h-4" strokeWidth={1.5} />
-                                    </button>
-                                  </div>
-                                </div>
-                              ))}
-                              {prod.insumos.length === 0 && (
-                                <p className="text-xs text-slate-400 text-center py-2">No hay insumos registrados para esta receta.</p>
-                              )}
-                            </div>
-
-                            {/* Añadir insumo */}
-                            <form onSubmit={(e) => handleAgregarInsumo(e, prod.id, prod.insumos)} className="flex items-center gap-2 mt-4 pt-4 border-t border-slate-200/60">
-                              <input 
-                                type="text" placeholder="Material..." required
-                                value={nuevoInsumo.nombre} onChange={e => setNuevoInsumo(p => ({...p, nombre: e.target.value}))}
-                                className="flex-1 text-xs px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500" 
-                              />
-                              <input 
-                                type="number" min={0.1} step={0.1} required
-                                value={nuevoInsumo.cantidadReq} onChange={e => setNuevoInsumo(p => ({...p, cantidadReq: parseFloat(e.target.value)}))}
-                                className="w-16 text-xs px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 font-mono" 
-                              />
-                              <input 
-                                type="text" placeholder="uds" required
-                                value={nuevoInsumo.unidad} onChange={e => setNuevoInsumo(p => ({...p, unidad: e.target.value}))}
-                                className="w-16 text-xs px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500" 
-                              />
-                              <button type="submit" className="p-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg transition-colors">
-                                <Plus className="w-4 h-4" />
-                              </button>
-                            </form>
-
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                  {productos.length === 0 && !creandoProducto && (
-                    <div className="col-span-1 lg:col-span-2 text-center py-10 bg-white rounded-3xl border border-dashed border-slate-300">
-                      <Box className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                      <p className="text-sm font-semibold text-slate-500">No hay productos en tu catálogo.</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
+            {ajustesTab === "recetas" && <ResumenRecetas />}
 
             {/* ── SUBVISTA: TAREAS (Asignación Dinámica) ── */}
             {ajustesTab === "tareas" && (
