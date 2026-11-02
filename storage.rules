@@ -1,0 +1,26 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function active() {
+      return signedIn()
+        && firestore.get(/databases/(default)/documents/usuarios/$(request.auth.uid)).data.activo == true;
+    }
+
+    match /evidencias/{uid}/{allPaths=**} {
+      allow read: if active();
+      allow write: if active()
+        && request.auth.uid == uid
+        && request.resource.size < 10 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

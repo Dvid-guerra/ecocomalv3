@@ -1,0 +1,149 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function profile() {
+      return get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data;
+    }
+
+    function active() {
+      return signedIn() && profile().activo == true;
+    }
+
+    function hasRole(roles) {
+      return active() && profile().rol in roles;
+    }
+
+    function manager() {
+      return hasRole(['Gerente']);
+    }
+
+    function administrator() {
+      return hasRole(['Gerente', 'Subgerente']);
+    }
+
+    function operational() {
+      return hasRole(['Gerente', 'Subgerente', 'Supervisor']);
+    }
+
+    match /usuarios/{uid} {
+      allow create: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.rol == 'Colaborador'
+        && request.resource.data.activo == false;
+      allow read: if active() && (request.auth.uid == uid || operational());
+      allow update: if manager()
+        || (hasRole(['Subgerente'])
+          && resource.data.rol != 'Gerente'
+          && request.resource.data.rol != 'Gerente')
+        || (request.auth.uid == uid
+          && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['nombre', 'areaPlanta']));
+      allow delete: if manager() && request.auth.uid != uid;
+    }
+
+    match /facturas/{id} {
+      allow read, create: if manager();
+      allow update, delete: if false;
+    }
+
+    match /configuracion/{id} {
+      allow read, write: if manager();
+    }
+
+    match /planillas/{id} {
+      allow read, create: if manager();
+      allow update, delete: if false;
+    }
+
+    match /registros_produccion/{id} {
+      allow read, create: if manager();
+      allow update, delete: if false;
+    }
+
+    match /asistencias/{id} {
+      allow read: if administrator()
+        || (active() && resource.data.usuarioId == request.auth.uid);
+      allow create: if active()
+        && request.resource.data.usuarioId == request.auth.uid;
+      allow update: if active()
+        && resource.data.usuarioId == request.auth.uid
+        && request.resource.data.usuarioId == resource.data.usuarioId;
+      allow delete: if manager();
+    }
+
+    match /permisos/{id} {
+      allow read: if administrator()
+        || (active() && resource.data.usuarioId == request.auth.uid);
+      allow create: if active()
+        && request.resource.data.usuarioId == request.auth.uid
+        && request.resource.data.estado == 'Pendiente';
+      allow update: if administrator();
+      allow delete: if manager();
+    }
+
+    match /tareas_planta/{id} {
+      allow read: if operational()
+        || (active() && resource.data.empleadoId == request.auth.uid);
+      allow create, update, delete: if operational();
+    }
+
+    match /inventario_stock/{id} {
+      allow read: if active();
+      allow write: if operational();
+    }
+
+    match /inventario_movimientos/{id} {
+      allow read: if active();
+      allow create: if operational();
+      allow update, delete: if false;
+    }
+
+    match /productos_recetas/{id} {
+      allow read: if active();
+      allow write: if operational();
+    }
+
+    match /planificacion_semanal/{id} {
+      allow read: if active();
+      allow write: if operational();
+    }
+
+    match /materiales/{id} {
+      allow read, write: if operational();
+    }
+
+    match /proveedores/{id} {
+      allow read, write: if operational();
+    }
+
+    match /ordenes_compra/{id} {
+      allow read, write: if operational();
+    }
+
+    match /recetas/{id} {
+      allow read, write: if operational();
+    }
+
+    match /clientes/{id} {
+      allow read, write: if operational();
+    }
+
+    match /pedidos/{id} {
+      allow read, write: if operational();
+    }
+
+    match /envios/{id} {
+      allow read: if active();
+      allow write: if operational();
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
