@@ -9,6 +9,7 @@ import type { Material, Proveedor, OrdenCompra, OrdenItem } from "@/types";
 import TabRecetas from "./TabRecetas";
 import MovimientoMaterialModal from "@/features/inventory/components/MovimientoMaterialModal";
 import HistorialMovimientos from "@/features/inventory/components/HistorialMovimientos";
+import AsistenteInventario from "@/features/agente/components/AsistenteInventario";
 import type { TipoMovimiento } from "@/features/inventory/domain/movimientos";
 
 type TabView = "inventario" | "movimientos" | "catalogo" | "pedidos" | "recetas";
@@ -526,6 +527,8 @@ export default function InventarioPage() {
       {activeTab === "recetas" && (
         <TabRecetas materiales={materiales} />
       )}
+
+      <AsistenteInventario />
 
       {movimiento && (() => {
         const material = materiales.find(m => m.id === movimiento.materialId);
