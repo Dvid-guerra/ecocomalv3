@@ -1,6 +1,10 @@
 import { doc, runTransaction } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { EstadoPedido, Material, Pedido, ProductoReceta } from "@/types";
+import {
+  aplicarMovimientoEnTransaccion,
+  type UsuarioMovimiento,
+} from "@/features/inventory/services/materiales";
 
 export interface FaltanteProduccion {
   materialId: string;
@@ -32,6 +36,7 @@ function calcularMateriales(receta: ProductoReceta, cantidad: number) {
 export async function actualizarEstadoPedido(
   pedido: Pedido,
   nuevoEstado: EstadoPedido,
+  usuario: UsuarioMovimiento,
 ): Promise<FaltanteProduccion[]> {
   const pedidoRef = doc(db, "pedidos", pedido.id);
 
@@ -71,12 +76,24 @@ export async function actualizarEstadoPedido(
 
     if (faltantes.length) return faltantes;
 
-    materialSnaps.forEach((snapshot, index) => {
-      const materialId = materialRefs[index].id;
-      transaction.update(materialRefs[index], {
-        stockActual: Number(snapshot.data()?.stockActual ?? 0) - (requeridos.get(materialId) ?? 0),
-      });
-    });
+    // Cada descuento queda registrado en el historial de movimientos.
+    for (const snapshot of materialSnaps) {
+      const cantidad = requeridos.get(snapshot.id) ?? 0;
+      if (cantidad <= 0) continue;
+      aplicarMovimientoEnTransaccion(
+        transaction,
+        snapshot,
+        {
+          materialId: snapshot.id,
+          tipo: "salida",
+          cantidad,
+          motivo: "consumo_produccion",
+          nota: `${pedido.cantidad} × ${pedido.modelo} — ${pedido.clienteNombre}`,
+          referencia: { tipo: "pedido", id: pedido.id },
+        },
+        { usuario, origen: "pedido" },
+      );
+    }
     transaction.update(pedidoRef, { estado: nuevoEstado });
     return [];
   });

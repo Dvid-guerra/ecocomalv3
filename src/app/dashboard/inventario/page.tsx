@@ -7,8 +7,11 @@ import { collection, onSnapshot, addDoc, doc, updateDoc, deleteDoc } from "fireb
 import { Package, Truck, Plus, Trash2, Printer, Save, CheckCircle, Database, AlertTriangle } from "lucide-react";
 import type { Material, Proveedor, OrdenCompra, OrdenItem } from "@/types";
 import TabRecetas from "./TabRecetas";
+import MovimientoMaterialModal from "@/features/inventory/components/MovimientoMaterialModal";
+import HistorialMovimientos from "@/features/inventory/components/HistorialMovimientos";
+import type { TipoMovimiento } from "@/features/inventory/domain/movimientos";
 
-type TabView = "inventario" | "catalogo" | "pedidos" | "recetas";
+type TabView = "inventario" | "movimientos" | "catalogo" | "pedidos" | "recetas";
 
 export default function InventarioPage() {
   const { sesion } = useAuth();
@@ -25,6 +28,9 @@ export default function InventarioPage() {
   
   // Form States - Nueva Orden de Compra
   const [nuevaOrden, setNuevaOrden] = useState<OrdenItem[]>([]);
+
+  // Modal de movimiento de stock
+  const [movimiento, setMovimiento] = useState<{ materialId: string; tipo: TipoMovimiento } | null>(null);
   
   const tieneAcceso = sesion && ["Gerente", "Subgerente", "Supervisor"].includes(sesion.rol);
 
@@ -80,11 +86,6 @@ export default function InventarioPage() {
 
   const handleDeleteMaterial = async (id: string) => {
     if(confirm("¿Eliminar material?")) await deleteDoc(doc(db, "materiales", id));
-  };
-
-  const handleUpdateStock = async (id: string, nuevoStock: number) => {
-    if (nuevoStock < 0) return;
-    await updateDoc(doc(db, "materiales", id), { stockActual: nuevoStock });
   };
 
   const handleUpdatePuntoReorden = async (id: string, nuevoPunto: number) => {
@@ -234,6 +235,12 @@ export default function InventarioPage() {
             Inventario
           </button>
           <button
+            onClick={() => setActiveTab("movimientos")}
+            className={`px-4 py-2 text-sm font-bold rounded-lg transition-colors ${activeTab === "movimientos" ? "bg-white text-indigo-700 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+          >
+            Movimientos
+          </button>
+          <button
             onClick={() => setActiveTab("catalogo")}
             className={`px-4 py-2 text-sm font-bold rounded-lg transition-colors ${activeTab === "catalogo" ? "bg-white text-indigo-700 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
           >
@@ -286,9 +293,10 @@ export default function InventarioPage() {
                       <td className="px-4 py-3 text-slate-500">{m.unidadMedida}</td>
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-center gap-2">
-                          <button onClick={() => handleUpdateStock(m.id, stock - 1)} className="w-6 h-6 rounded bg-slate-200 text-slate-600 flex items-center justify-center hover:bg-slate-300 font-bold">-</button>
+                          <button onClick={() => setMovimiento({ materialId: m.id, tipo: "salida" })} title="Registrar salida" className="w-6 h-6 rounded bg-slate-200 text-slate-600 flex items-center justify-center hover:bg-slate-300 font-bold">-</button>
                           <span className={`w-12 text-center font-mono font-bold text-base ${bajoReorden ? 'text-red-600' : 'text-slate-700'}`}>{stock}</span>
-                          <button onClick={() => handleUpdateStock(m.id, stock + 1)} className="w-6 h-6 rounded bg-indigo-100 text-indigo-700 flex items-center justify-center hover:bg-indigo-200 font-bold">+</button>
+                          <button onClick={() => setMovimiento({ materialId: m.id, tipo: "entrada" })} title="Registrar entrada" className="w-6 h-6 rounded bg-indigo-100 text-indigo-700 flex items-center justify-center hover:bg-indigo-200 font-bold">+</button>
+                          <button onClick={() => setMovimiento({ materialId: m.id, tipo: "ajuste" })} title="Ajustar por conteo físico" className="ml-1 text-xs font-bold text-amber-600 hover:text-amber-700">Ajustar</button>
                         </div>
                       </td>
                       <td className="px-4 py-3">
@@ -322,6 +330,8 @@ export default function InventarioPage() {
           </div>
         </div>
       )}
+
+      {activeTab === "movimientos" && <HistorialMovimientos />}
 
       {activeTab === "catalogo" && (
         <div className="print:hidden grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -516,6 +526,20 @@ export default function InventarioPage() {
       {activeTab === "recetas" && (
         <TabRecetas materiales={materiales} />
       )}
+
+      {movimiento && (() => {
+        const material = materiales.find(m => m.id === movimiento.materialId);
+        if (!material) return null;
+        return (
+          <MovimientoMaterialModal
+            key={`${material.id}-${movimiento.tipo}`}
+            material={material}
+            tipoInicial={movimiento.tipo}
+            usuario={{ uid: sesion.uid, nombre: sesion.nombre }}
+            onClose={() => setMovimiento(null)}
+          />
+        );
+      })()}
     </div>
   );
 }

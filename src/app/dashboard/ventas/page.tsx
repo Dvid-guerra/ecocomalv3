@@ -749,6 +749,7 @@ function TabPedidos({
   filtroClienteId: string | null;
   onClearFiltro: () => void;
 }) {
+  const { sesion } = useAuth();
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [loading, setLoading] = useState(true);
@@ -853,10 +854,10 @@ function TabPedidos({
   }
 
   async function handleUpdateEstado() {
-    if (!selectedPedido) return;
+    if (!selectedPedido || !sesion) return;
     setSaving(true);
     try {
-      const faltantes = await actualizarEstadoPedido(selectedPedido, nuevoEstado);
+      const faltantes = await actualizarEstadoPedido(selectedPedido, nuevoEstado, { uid: sesion.uid, nombre: sesion.nombre });
       if (faltantes.length) {
         setFaltantesParaProducir(faltantes);
         setShowFaltantesModal(true);
