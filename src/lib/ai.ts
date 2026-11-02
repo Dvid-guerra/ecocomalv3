@@ -20,10 +20,10 @@ export const MODELO_AGENTE = process.env.AGENTE_MODELO || "gemini-flash-latest";
 export const MODELO_RESPALDO = process.env.AGENTE_MODELO_RESPALDO || "gemini-2.5-flash";
 
 /**
- * Cuánto "piensa" el modelo principal. Para consultas de inventario basta "minimal":
- * responde más rápido y cuesta menos.
+ * Cuánto "piensa" el modelo principal. "low" es el nivel más bajo que aceptan todos los
+ * Gemini 3+ ("minimal" no lo soportan algunos). Para inventario es suficiente y rápido.
  */
-const RAZONAMIENTO: NivelRazonamiento = NIVELES.includes(nivelEnv) ? nivelEnv : "minimal";
+const RAZONAMIENTO: NivelRazonamiento = NIVELES.includes(nivelEnv) ? nivelEnv : "low";
 
 function conOpciones(modelId: string, google_: GoogleLanguageModelOptions): Modelo {
   return wrapLanguageModel({
@@ -32,10 +32,14 @@ function conOpciones(modelId: string, google_: GoogleLanguageModelOptions): Mode
   });
 }
 
-/** Errores en los que conviene intentar con otro modelo: saturación, límite o falla del servidor. */
+/**
+ * Errores en los que conviene intentar con otro modelo: saturación, límite, falla del
+ * servidor, o que el modelo no acepte la configuración de razonamiento.
+ */
 function esErrorTemporal(error: unknown) {
   if (!APICallError.isInstance(error)) return false;
-  return error.isRetryable || error.statusCode === 429 || (error.statusCode ?? 0) >= 500;
+  if (error.isRetryable || error.statusCode === 429 || (error.statusCode ?? 0) >= 500) return true;
+  return error.statusCode === 400 && /thinking/i.test(error.message);
 }
 
 /** Usa `principal` y, si responde con un error temporal, reintenta con cada respaldo en orden. */
@@ -47,7 +51,7 @@ function conRespaldo(principal: Modelo, respaldos: { id: string; modelo: Modelo 
       if (!esErrorTemporal(error)) throw error;
       let ultimo = error;
       for (const r of respaldos) {
-        console.warn(`[agente] ${principal.modelId} no disponible; usando respaldo ${r.id}`);
+        console.warn(`[agente] ${principal.modelId} falló (${(error as Error).message.slice(0, 80)}); usando respaldo ${r.id}`);
         try {
           return await siguiente(r.modelo);
         } catch (e) {
