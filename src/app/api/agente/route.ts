@@ -12,6 +12,7 @@ import { autenticar, ErrorApi, ROLES_OPERATIVOS, verificarMismoOrigen } from "@/
 import { iaConfigurada, MODELO_AGENTE, modeloAgente, opcionesProveedor } from "@/lib/ai";
 import { toolsInventario } from "@/features/agente/tools-inventario";
 import { instruccionesInventario } from "@/features/agente/instrucciones";
+import { describirErrorIA } from "@/features/agente/errores";
 
 export const maxDuration = 60;
 
@@ -63,7 +64,13 @@ export async function POST(request: NextRequest) {
     });
 
     return createUIMessageStreamResponse({
-      stream: toUIMessageStream({ stream: result.stream }),
+      stream: toUIMessageStream({
+        stream: result.stream,
+        onError: error => {
+          console.error("[agente] Error en la respuesta:", error);
+          return describirErrorIA(error);
+        },
+      }),
     });
   } catch (error) {
     if (error instanceof ErrorApi) return jsonError(error.message, error.status);

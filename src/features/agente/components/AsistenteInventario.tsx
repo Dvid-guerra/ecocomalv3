@@ -134,7 +134,7 @@ export default function AsistenteInventario() {
           </div>
         )}
         {error && (
-          <p className="text-xs text-red-600 bg-red-50 ring-1 ring-red-200 rounded-xl px-3 py-2">
+          <p className="text-xs text-red-600 bg-red-50 ring-1 ring-red-200 rounded-xl px-3 py-2 whitespace-pre-wrap break-words">
             {mensajeError(error)}
           </p>
         )}
@@ -182,6 +182,6 @@ function mensajeError(error: Error) {
   try {
     const parsed = JSON.parse(error.message) as { error?: string };
     if (parsed.error) return parsed.error;
-  } catch { /* no era JSON */ }
-  return "No se pudo obtener respuesta. Intenta de nuevo.";
+  } catch { /* no era JSON: es el mensaje que envía el servidor en el stream */ }
+  return error.message?.trim() || "No se pudo obtener respuesta. Intenta de nuevo.";
 }
