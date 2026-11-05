@@ -4,13 +4,16 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { collection, onSnapshot, addDoc, doc, updateDoc, deleteDoc } from "firebase/firestore";
-import { Package, Truck, Plus, Trash2, Printer, Save, CheckCircle, Database, AlertTriangle } from "lucide-react";
+import Link from "next/link";
+import { Package, Truck, Plus, Trash2, Printer, Save, CheckCircle, Database, AlertTriangle, Pencil, ScanLine, Tags } from "lucide-react";
 import type { Material, Proveedor, OrdenCompra, OrdenItem } from "@/types";
 import TabRecetas from "./TabRecetas";
 import MovimientoMaterialModal from "@/features/inventory/components/MovimientoMaterialModal";
 import HistorialMovimientos from "@/features/inventory/components/HistorialMovimientos";
 import AsistenteInventario from "@/features/agente/components/AsistenteInventario";
+import FichaMaterialModal from "@/features/inventory/components/FichaMaterialModal";
 import type { TipoMovimiento } from "@/features/inventory/domain/movimientos";
+import { esFamilia, FAMILIAS } from "@/features/inventory/domain/materiales";
 
 type TabView = "inventario" | "movimientos" | "catalogo" | "pedidos" | "recetas";
 
@@ -32,6 +35,7 @@ export default function InventarioPage() {
 
   // Modal de movimiento de stock
   const [movimiento, setMovimiento] = useState<{ materialId: string; tipo: TipoMovimiento } | null>(null);
+  const [fichaId, setFichaId] = useState<string | null>(null);
   
   const tieneAcceso = sesion && ["Gerente", "Subgerente", "Supervisor"].includes(sesion.rol);
 
@@ -228,6 +232,15 @@ export default function InventarioPage() {
           </div>
         </div>
 
+        <div className="flex gap-2">
+          <Link href="/dashboard/inventario/registro" className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold bg-emerald-600 text-white hover:bg-emerald-700">
+            <ScanLine className="w-4 h-4" /> Punto de registro
+          </Link>
+          <Link href="/dashboard/inventario/etiquetas" className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold bg-white ring-1 ring-slate-200 text-slate-700 hover:bg-slate-50">
+            <Tags className="w-4 h-4" /> Etiquetas QR
+          </Link>
+        </div>
+
         <div className="flex gap-2 bg-slate-100 p-1 rounded-xl">
           <button
             onClick={() => setActiveTab("inventario")}
@@ -290,7 +303,10 @@ export default function InventarioPage() {
 
                   return (
                     <tr key={m.id} className="hover:bg-slate-50">
-                      <td className="px-4 py-3 font-medium text-slate-800">{m.nombre}</td>
+                      <td className="px-4 py-3 font-medium text-slate-800">
+                        {m.nombre}
+                        {m.ubicacion && <p className="text-xs font-mono font-normal text-slate-400">{m.ubicacion}</p>}
+                      </td>
                       <td className="px-4 py-3 text-slate-500">{m.unidadMedida}</td>
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-center gap-2">
@@ -386,6 +402,7 @@ export default function InventarioPage() {
                   <tr>
                     <th className="px-4 py-3 font-bold">Material</th>
                     <th className="px-4 py-3 font-bold">Proveedor</th>
+                    <th className="px-4 py-3 font-bold">Ubicación</th>
                     <th className="px-4 py-3 font-bold">Precio Est.</th>
                     <th className="px-4 py-3 font-bold text-center">Acción</th>
                   </tr>
@@ -395,7 +412,14 @@ export default function InventarioPage() {
                     const prov = proveedores.find(p => p.id === m.proveedorDefectoId);
                     return (
                       <tr key={m.id} className="hover:bg-slate-50">
-                        <td className="px-4 py-3 font-medium text-slate-800">{m.nombre}</td>
+                        <td className="px-4 py-3 font-medium text-slate-800">
+                          <span className="inline-flex items-center gap-2">
+                            {esFamilia(m.familia) && (
+                              <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: FAMILIAS[m.familia].color }} title={FAMILIAS[m.familia].etiqueta} />
+                            )}
+                            {m.nombre}
+                          </span>
+                        </td>
                         <td className="px-4 py-3">
                           {prov ? (
                             <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-bold text-white" style={{ backgroundColor: prov.colorEtiqueta }}>
@@ -403,9 +427,13 @@ export default function InventarioPage() {
                             </span>
                           ) : <span className="text-slate-400 text-xs">Sin asignar</span>}
                         </td>
-                        <td className="px-4 py-3 font-mono">Q{m.precioEstimado.toFixed(2)}</td>
-                        <td className="px-4 py-3 text-center">
-                          <button onClick={() => handleDeleteMaterial(m.id)} className="text-slate-400 hover:text-red-500"><Trash2 className="w-4 h-4 mx-auto"/></button>
+                        <td className="px-4 py-3 font-mono text-xs">{m.ubicacion ?? <span className="text-slate-300">—</span>}</td>
+                        <td className="px-4 py-3 font-mono">Q{Number(m.precioEstimado || 0).toFixed(2)}</td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center justify-center gap-3">
+                            <button onClick={() => setFichaId(m.id)} className="text-slate-400 hover:text-indigo-600" title="Editar ficha"><Pencil className="w-4 h-4"/></button>
+                            <button onClick={() => handleDeleteMaterial(m.id)} className="text-slate-400 hover:text-red-500" title="Eliminar"><Trash2 className="w-4 h-4"/></button>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -530,6 +558,12 @@ export default function InventarioPage() {
 
       <AsistenteInventario />
 
+      {fichaId && (() => {
+        const material = materiales.find(m => m.id === fichaId);
+        if (!material) return null;
+        return <FichaMaterialModal key={material.id} material={material} proveedores={proveedores} onClose={() => setFichaId(null)} />;
+      })()}
+
       {movimiento && (() => {
         const material = materiales.find(m => m.id === movimiento.materialId);
         if (!material) return null;
@@ -538,7 +572,6 @@ export default function InventarioPage() {
             key={`${material.id}-${movimiento.tipo}`}
             material={material}
             tipoInicial={movimiento.tipo}
-            usuario={{ uid: sesion.uid, nombre: sesion.nombre }}
             onClose={() => setMovimiento(null)}
           />
         );

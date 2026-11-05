@@ -857,7 +857,7 @@ function TabPedidos({
     if (!selectedPedido || !sesion) return;
     setSaving(true);
     try {
-      const faltantes = await actualizarEstadoPedido(selectedPedido, nuevoEstado, { uid: sesion.uid, nombre: sesion.nombre });
+      const faltantes = await actualizarEstadoPedido(selectedPedido, nuevoEstado);
       if (faltantes.length) {
         setFaltantesParaProducir(faltantes);
         setShowFaltantesModal(true);
@@ -868,7 +868,7 @@ function TabPedidos({
       console.error(e);
       alert(e instanceof RecetaNoConfiguradaError
         ? `${e.message} Configúrala en Inventario > Recetas.`
-        : "Ocurrió un error al actualizar el estado");
+        : e instanceof Error ? e.message : "Ocurrió un error al actualizar el estado");
     } finally {
       setSaving(false);
     }

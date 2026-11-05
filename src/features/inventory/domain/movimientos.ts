@@ -24,8 +24,9 @@ export const ETIQUETAS_MOTIVO: Record<MotivoMovimiento, string> = {
   otro: "Otro",
 };
 
-/** Quién o qué originó el movimiento. */
-export type OrigenMovimiento = "ui" | "pedido" | "agente" | "sensor";
+/** Quién o qué originó el movimiento. `kiosko` = Punto de registro del furgón. */
+export const ORIGENES_MOVIMIENTO = ["ui", "kiosko", "pedido", "agente", "sensor"] as const;
+export type OrigenMovimiento = (typeof ORIGENES_MOVIMIENTO)[number];
 
 export interface MovimientoInput {
   materialId: string;
@@ -47,6 +48,14 @@ export interface ResultadoMovimiento {
   delta: number;
 }
 
+/** Datos del movimiento inválidos (error del usuario, no del sistema). */
+export class MovimientoInvalidoError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "MovimientoInvalidoError";
+  }
+}
+
 export class StockMaterialInsuficienteError extends Error {
   readonly disponible: number;
   readonly solicitado: number;
@@ -65,17 +74,17 @@ function redondear(valor: number) {
 }
 
 export function validarMovimiento(input: MovimientoInput): void {
-  if (!input.materialId) throw new Error("Falta el material.");
-  if (!TIPOS_MOVIMIENTO.includes(input.tipo)) throw new Error(`Tipo inválido: ${input.tipo}`);
+  if (!input.materialId) throw new MovimientoInvalidoError("Falta el material.");
+  if (!TIPOS_MOVIMIENTO.includes(input.tipo)) throw new MovimientoInvalidoError(`Tipo inválido: ${input.tipo}`);
 
   const motivos: readonly string[] = MOTIVOS_POR_TIPO[input.tipo];
   if (!motivos.includes(input.motivo)) {
-    throw new Error(`El motivo "${input.motivo}" no aplica a un movimiento de ${input.tipo}.`);
+    throw new MovimientoInvalidoError(`El motivo "${input.motivo}" no aplica a un movimiento de ${input.tipo}.`);
   }
 
-  if (!Number.isFinite(input.cantidad)) throw new Error("La cantidad debe ser un número.");
+  if (!Number.isFinite(input.cantidad)) throw new MovimientoInvalidoError("La cantidad debe ser un número.");
   if (input.tipo === "ajuste" ? input.cantidad < 0 : input.cantidad <= 0) {
-    throw new Error(input.tipo === "ajuste"
+    throw new MovimientoInvalidoError(input.tipo === "ajuste"
       ? "El stock contado no puede ser negativo."
       : "La cantidad debe ser mayor a cero.");
   }

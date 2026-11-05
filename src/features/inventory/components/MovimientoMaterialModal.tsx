@@ -10,7 +10,7 @@ import {
   type MotivoMovimiento,
   type TipoMovimiento,
 } from "../domain/movimientos";
-import { registrarMovimientoMaterial, type UsuarioMovimiento } from "../services/materiales";
+import { registrarMovimientoMaterial } from "../services/materiales";
 
 const TIPOS: { value: TipoMovimiento; label: string; icon: typeof ArrowUpCircle; activo: string }[] = [
   { value: "entrada", label: "Entrada", icon: ArrowDownCircle, activo: "bg-emerald-600 text-white" },
@@ -20,12 +20,11 @@ const TIPOS: { value: TipoMovimiento; label: string; icon: typeof ArrowUpCircle;
 
 interface Props {
   material: Material;
-  usuario: UsuarioMovimiento;
   tipoInicial?: TipoMovimiento;
   onClose: () => void;
 }
 
-export default function MovimientoMaterialModal({ material, usuario, tipoInicial = "entrada", onClose }: Props) {
+export default function MovimientoMaterialModal({ material, tipoInicial = "entrada", onClose }: Props) {
   const [tipo, setTipo] = useState<TipoMovimiento>(tipoInicial);
   const [motivo, setMotivo] = useState<MotivoMovimiento>(MOTIVOS_POR_TIPO[tipoInicial][0]);
   const [cantidad, setCantidad] = useState("");
@@ -56,10 +55,7 @@ export default function MovimientoMaterialModal({ material, usuario, tipoInicial
     setGuardando(true);
     setError(null);
     try {
-      await registrarMovimientoMaterial(
-        { materialId: material.id, tipo, motivo, cantidad: Number(cantidad), nota },
-        usuario,
-      );
+      await registrarMovimientoMaterial({ materialId: material.id, tipo, motivo, cantidad: Number(cantidad), nota });
       onClose();
     } catch (err) {
       console.error(err);

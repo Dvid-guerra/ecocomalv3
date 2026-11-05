@@ -13,6 +13,7 @@ const ESTILO_TIPO: Record<TipoMovimiento, string> = {
 
 const ORIGEN: Record<MovimientoMaterial["origen"], string> = {
   ui: "Manual",
+  kiosko: "Punto de registro",
   pedido: "Pedido",
   agente: "Asistente IA",
   sensor: "Sensor",
@@ -95,7 +96,10 @@ export default function HistorialMovimientos() {
                 <td className="px-4 py-3">{ETIQUETAS_MOTIVO[m.motivo] ?? m.motivo}</td>
                 <td className="px-4 py-3 whitespace-nowrap">
                   {m.usuarioNombre}
-                  <p className="text-xs text-slate-400">{ORIGEN[m.origen] ?? m.origen}</p>
+                  <p className="text-xs text-slate-400">
+                    {ORIGEN[m.origen] ?? m.origen}
+                    {m.registradoPorNombre && ` · registró ${m.registradoPorNombre}`}
+                  </p>
                 </td>
               </tr>
             ))}

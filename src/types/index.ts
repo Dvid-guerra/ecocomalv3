@@ -242,8 +242,15 @@ export interface Material {
   unidadMedida: string; // ej. "Unidad", "Libras", "Galón"
   precioEstimado: number;
   proveedorDefectoId?: string;
+  /** Solo lo cambia el servidor al registrar un movimiento. */
   stockActual?: number;
   puntoReorden?: number;
+  /** Familia de consumible (color de gaveta). Ver `FAMILIAS` en features/inventory/domain/materiales. */
+  familia?: string;
+  /** Código de ubicación física, ej. "C-E1-N2-P03". */
+  ubicacion?: string;
+  /** Peso de una pieza en gramos, para contar por diferencia de peso. */
+  pesoUnitarioG?: number;
 }
 
 export interface OrdenItem {

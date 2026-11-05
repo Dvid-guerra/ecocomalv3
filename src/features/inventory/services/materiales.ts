@@ -1,32 +1,15 @@
-import {
-  collection,
-  doc,
-  limit,
-  onSnapshot,
-  orderBy,
-  query,
-  runTransaction,
-  serverTimestamp,
-  type DocumentSnapshot,
-  type Timestamp,
-  type Transaction,
-} from "firebase/firestore";
+import { collection, limit, onSnapshot, orderBy, query, type Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import {
-  calcularMovimiento,
-  type MotivoMovimiento,
-  type MovimientoInput,
-  type OrigenMovimiento,
-  type ResultadoMovimiento,
-  type TipoMovimiento,
+import { postJson } from "@/lib/api-cliente";
+import type {
+  MotivoMovimiento,
+  MovimientoInput,
+  OrigenMovimiento,
+  ResultadoMovimiento,
+  TipoMovimiento,
 } from "../domain/movimientos";
 
 export const COLECCION_MOVIMIENTOS = "materiales_movimientos";
-
-export interface UsuarioMovimiento {
-  uid: string;
-  nombre: string;
-}
 
 /** Documento en `materiales_movimientos`. Inmutable: nunca se edita ni se borra. */
 export interface MovimientoMaterial {
@@ -42,67 +25,34 @@ export interface MovimientoMaterial {
   nota?: string;
   referencia?: MovimientoInput["referencia"];
   origen: OrigenMovimiento;
+  /** Quien hizo físicamente el movimiento. */
   usuarioId: string;
   usuarioNombre: string;
+  /** Cuenta que lo registró, si fue otra (ej. la tablet del Punto de registro). */
+  registradoPorId?: string;
+  registradoPorNombre?: string;
   timestamp: Timestamp | null;
 }
 
-interface ContextoMovimiento {
-  usuario: UsuarioMovimiento;
-  origen: OrigenMovimiento;
+interface OpcionesMovimiento {
+  origen?: "ui" | "kiosko";
+  /** Punto de registro: uid de la persona que sacó o metió el material. */
+  realizadoPorId?: string;
 }
 
 /**
- * Aplica un movimiento dentro de una transacción ya abierta.
- * El snapshot del material debe haberse leído antes con `transaction.get`
- * (Firestore exige todas las lecturas antes de cualquier escritura).
+ * Registra un movimiento (entrada, salida o ajuste) en el servidor.
+ * El stock nunca se escribe desde el cliente: lo hace /api/inventario/movimientos en una transacción.
  */
-export function aplicarMovimientoEnTransaccion(
-  transaction: Transaction,
-  materialSnap: DocumentSnapshot,
-  input: MovimientoInput,
-  { usuario, origen }: ContextoMovimiento,
-): ResultadoMovimiento {
-  if (!materialSnap.exists()) throw new Error(`El material ${input.materialId} no existe.`);
-
-  const data = materialSnap.data();
-  const resultado = calcularMovimiento(Number(data.stockActual ?? 0), input);
-
-  transaction.update(materialSnap.ref, {
-    stockActual: resultado.stockResultante,
-    actualizadoEn: serverTimestamp(),
-  });
-
-  const nota = input.nota?.trim();
-  transaction.set(doc(collection(db, COLECCION_MOVIMIENTOS)), {
-    materialId: input.materialId,
-    materialNombre: String(data.nombre ?? input.materialId),
-    tipo: input.tipo,
-    motivo: input.motivo,
-    cantidad: input.cantidad,
-    ...resultado,
-    ...(nota ? { nota } : {}),
-    ...(input.referencia ? { referencia: input.referencia } : {}),
-    origen,
-    usuarioId: usuario.uid,
-    usuarioNombre: usuario.nombre,
-    timestamp: serverTimestamp(),
-  });
-
-  return resultado;
-}
-
-/** Registra un movimiento suelto (entrada, salida o ajuste) de forma atómica. */
 export async function registrarMovimientoMaterial(
   input: MovimientoInput,
-  usuario: UsuarioMovimiento,
-  origen: OrigenMovimiento = "ui",
+  opciones: OpcionesMovimiento = {},
 ): Promise<ResultadoMovimiento> {
-  const materialRef = doc(db, "materiales", input.materialId);
-  return runTransaction(db, async transaction => {
-    const snap = await transaction.get(materialRef);
-    return aplicarMovimientoEnTransaccion(transaction, snap, input, { usuario, origen });
+  const { resultado } = await postJson<{ resultado: ResultadoMovimiento }>("/api/inventario/movimientos", {
+    ...input,
+    ...opciones,
   });
+  return resultado;
 }
 
 /** Escucha los movimientos más recientes de todos los materiales. */

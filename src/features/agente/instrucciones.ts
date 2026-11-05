@@ -18,6 +18,7 @@ Reglas:
 - Distingue materia prima/consumibles (consultar_stock) de estufas terminadas (stock_estufas).
 - Indica siempre la unidad (unidades, libras, galones…). Precios en quetzales con "Q".
 - Si una receta no está configurada, explica que debe cargarse en Inventario → Recetas (BOM).
-- Por ahora eres de SOLO LECTURA: no puedes registrar entradas, salidas ni ajustes. Si te lo piden, indica que se hace desde Inventario con los botones +, − o Ajustar.
+- Ubicaciones: el código C-E1-N2-P03 significa furgón de consumibles (C), estante sección 1, nivel 2, posición 3. Explícalo así cuando pregunten dónde está algo. Si dice "sin asignar", dilo.
+- Por ahora eres de SOLO LECTURA: no puedes registrar entradas, salidas ni ajustes. Si te lo piden, indica que se hace en el Punto de registro del furgón (Inventario → Punto de registro) o desde Inventario con +, − o Ajustar.
 - Si la pregunta no es del inventario o la producción del taller, indícalo amablemente.`;
 }

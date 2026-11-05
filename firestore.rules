@@ -114,20 +114,21 @@ service cloud.firestore {
       allow write: if operational();
     }
 
+    // El stock solo cambia en el servidor (/api/inventario/movimientos y /api/pedidos/*/estado),
+    // que escribe con firebase-admin dentro de una transacción y deja el movimiento en el historial.
     match /materiales/{id} {
-      allow read, write: if operational();
+      allow read, delete: if operational();
+      allow create: if operational()
+        && (!('stockActual' in request.resource.data) || request.resource.data.stockActual == 0);
+      allow update: if operational()
+        && !request.resource.data.diff(resource.data).affectedKeys()
+          .hasAny(['stockActual', 'actualizadoEn']);
     }
 
-    // Historial inmutable de entradas, salidas y ajustes de materiales.
+    // Historial inmutable de entradas, salidas y ajustes de materiales. Solo lo escribe el servidor.
     match /materiales_movimientos/{id} {
       allow read: if operational();
-      allow create: if operational()
-        && request.resource.data.usuarioId == request.auth.uid
-        && request.resource.data.tipo in ['entrada', 'salida', 'ajuste']
-        && request.resource.data.cantidad is number
-        && request.resource.data.timestamp == request.time
-        && exists(/databases/$(database)/documents/materiales/$(request.resource.data.materialId));
-      allow update, delete: if false;
+      allow write: if false;
     }
 
     match /proveedores/{id} {

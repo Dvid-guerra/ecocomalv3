@@ -9,16 +9,13 @@ import {
   calcularMaterialesRequeridos,
 } from "../domain/recetas";
 import type { TipoMovimiento } from "../domain/movimientos";
+import { esFamilia, FAMILIAS } from "../domain/materiales";
+import { normalizar } from "../domain/texto";
 
 /**
  * Consultas de solo lectura para el servidor (agente IA, futuros endpoints).
  * Reutilizan el mismo dominio que la UI para que los números coincidan.
  */
-
-/** Minúsculas y sin tildes, para que "lamina" encuentre "Lámina". */
-export function normalizar(texto: string) {
-  return texto.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
-}
 
 function coincide(nombre: string, busqueda?: string) {
   if (!busqueda?.trim()) return true;
@@ -42,6 +39,8 @@ async function cargarMateriales() {
       puntoReorden: Number(m.puntoReorden) || 0,
       precio: Number(m.precioEstimado) || 0,
       proveedor: m.proveedorDefectoId ? proveedores.get(m.proveedorDefectoId) ?? null : null,
+      ubicacion: m.ubicacion || null,
+      familia: esFamilia(m.familia) ? FAMILIAS[m.familia].etiqueta : null,
     };
   });
 }
@@ -54,7 +53,9 @@ async function cargarRecetas() {
 }
 
 export async function consultarStock(busqueda?: string) {
-  const materiales = (await cargarMateriales()).filter(m => coincide(m.nombre, busqueda));
+  const materiales = (await cargarMateriales()).filter(
+    m => coincide(m.nombre, busqueda) || (m.ubicacion !== null && coincide(m.ubicacion, busqueda)),
+  );
   return {
     total: materiales.length,
     materiales: materiales.slice(0, 40).map(m => ({
@@ -63,6 +64,8 @@ export async function consultarStock(busqueda?: string) {
       unidad: m.unidad,
       puntoReorden: m.puntoReorden,
       estado: m.stock <= m.puntoReorden ? "PEDIR" : "OK",
+      ubicacion: m.ubicacion ?? "sin asignar",
+      familia: m.familia,
     })),
   };
 }
@@ -80,6 +83,7 @@ export async function materialesBajoMinimo() {
       unidad: m.unidad,
       proveedor: m.proveedor,
       precioEstimado: m.precio,
+      ubicacion: m.ubicacion,
     })),
   };
 }

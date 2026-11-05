@@ -29,9 +29,9 @@ function medido<I, O>(nombre: string, fn: (input: I) => Promise<O>) {
 export const toolsInventario = {
   consultar_stock: tool({
     description:
-      "Busca materiales de materia prima o consumibles (lámina, tubo, discos, electrodos, pintura…) y devuelve su stock actual, unidad y punto de reorden. Sin búsqueda devuelve todos.",
+      "Busca materiales de materia prima o consumibles (lámina, tubo, discos, electrodos, pintura…) por nombre o código de ubicación y devuelve stock actual, unidad, punto de reorden, familia y ubicación física. Úsala también para '¿dónde está…?'. Sin búsqueda devuelve todos.",
     inputSchema: z.object({
-      busqueda: z.string().optional().describe("Parte del nombre del material, ej. 'disco', 'tubo 2x6'"),
+      busqueda: z.string().optional().describe("Parte del nombre del material o código de ubicación, ej. 'disco', 'tubo 2x6', 'C-E1'"),
     }),
     execute: medido("consultar_stock", ({ busqueda }: { busqueda?: string }) => consultarStock(busqueda)),
   }),
