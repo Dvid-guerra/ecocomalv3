@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { AlertTriangle, ArrowDownCircle, ArrowUpCircle, ClipboardCheck, Minus, Plus, Scale } from "lucide-react";
+import { AlertTriangle, ArrowDownCircle, ArrowUpCircle, ClipboardCheck, Minus, Plus } from "lucide-react";
 import type { Material, Pedido } from "@/types";
 import {
   calcularMovimiento,
@@ -11,7 +11,7 @@ import {
   type ResultadoMovimiento,
   type TipoMovimiento,
 } from "../../domain/movimientos";
-import { esFamilia, FAMILIAS, piezasPorPeso } from "../../domain/materiales";
+import { esFamilia, FAMILIAS } from "../../domain/materiales";
 import { registrarMovimientoMaterial } from "../../services/materiales";
 
 export interface PersonaRegistro {
@@ -46,7 +46,6 @@ export default function PasoCantidad({ material, persona, pedidos, onRegistrado,
   const [cantidad, setCantidad] = useState("");
   const [pedidoId, setPedidoId] = useState("");
   const [nota, setNota] = useState("");
-  const [peso, setPeso] = useState<{ abierto: boolean; antes: string; despues: string }>({ abierto: false, antes: "", despues: "" });
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -63,10 +62,6 @@ export default function PasoCantidad({ material, persona, pedidos, onRegistrado,
       return { ok: false as const, mensaje: e instanceof Error ? e.message : "Cantidad inválida" };
     }
   }, [cantidad, stock, material.id, tipo, motivo]);
-
-  const conteoPeso = material.pesoUnitarioG && peso.antes !== "" && peso.despues !== ""
-    ? piezasPorPeso(Number(peso.antes), Number(peso.despues), material.pesoUnitarioG)
-    : null;
 
   const cambiarTipo = (nuevo: TipoMovimiento) => {
     setTipo(nuevo);
@@ -187,39 +182,6 @@ export default function PasoCantidad({ material, persona, pedidos, onRegistrado,
           ))}
         </div>
 
-        {material.pesoUnitarioG ? (
-          <div className="rounded-2xl bg-slate-50 ring-1 ring-slate-100 p-4 space-y-3">
-            <button onClick={() => setPeso(p => ({ ...p, abierto: !p.abierto }))} className="flex items-center gap-2 text-sm font-bold text-slate-700">
-              <Scale className="w-5 h-5" /> Contar por peso <span className="font-normal text-slate-400">({material.pesoUnitarioG} g por pieza)</span>
-            </button>
-            {peso.abierto && (
-              <>
-                <div className="grid grid-cols-2 gap-3">
-                  <label className="space-y-1">
-                    <span className="text-xs font-bold text-slate-500 uppercase">Gaveta antes (g)</span>
-                    <input type="number" inputMode="decimal" value={peso.antes} onChange={e => setPeso(p => ({ ...p, antes: e.target.value }))} className="w-full h-12 text-xl font-mono rounded-xl border-slate-200" />
-                  </label>
-                  <label className="space-y-1">
-                    <span className="text-xs font-bold text-slate-500 uppercase">Gaveta después (g)</span>
-                    <input type="number" inputMode="decimal" value={peso.despues} onChange={e => setPeso(p => ({ ...p, despues: e.target.value }))} className="w-full h-12 text-xl font-mono rounded-xl border-slate-200" />
-                  </label>
-                </div>
-                {conteoPeso && (
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm text-slate-600">
-                      {conteoPeso.diferenciaG} g = <span className="font-mono font-bold text-slate-900">{conteoPeso.piezas}</span> piezas
-                      {conteoPeso.desviacion > 0.25 && <span className="block text-amber-600">No cuadra exacto: revisar la báscula o el peso por pieza.</span>}
-                      {tipo === "salida" && !conteoPeso.salieron && <span className="block text-amber-600">El peso subió: ¿es una entrada?</span>}
-                    </p>
-                    <button onClick={() => setCantidad(String(conteoPeso.piezas))} className="px-4 py-3 rounded-xl text-sm font-bold bg-slate-900 text-white">
-                      Usar {conteoPeso.piezas}
-                    </button>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-        ) : null}
       </div>
 
       {/* Pedido y nota */}

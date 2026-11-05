@@ -6,7 +6,12 @@ import { X } from "lucide-react";
 // BarcodeDetector aún no está en lib.dom de TypeScript.
 interface CodigoDetectado { rawValue: string }
 interface DetectorCodigos { detect(fuente: HTMLVideoElement): Promise<CodigoDetectado[]> }
-type ConstructorDetector = new (opciones: { formats: string[] }) => DetectorCodigos;
+type ConstructorDetector = (new (opciones: { formats: string[] }) => DetectorCodigos) & {
+  getSupportedFormats?: () => Promise<string[]>;
+};
+
+/** QR de las etiquetas y los códigos de barras más comunes en empaques. */
+const FORMATOS = ["qr_code", "ean_13", "ean_8", "upc_a", "upc_e", "code_128", "code_39"];
 
 function obtenerDetector(): ConstructorDetector | null {
   if (typeof window === "undefined") return null;
@@ -33,13 +38,13 @@ export default function EscanerCamara({ onCodigo, onClose }: Props) {
     let stream: MediaStream | null = null;
     let timer: ReturnType<typeof setTimeout> | undefined;
     let activo = true;
-    const detector = new Detector({ formats: ["qr_code"] });
+    let detector: DetectorCodigos | null = null;
 
     const buscar = async () => {
       const video = videoRef.current;
       if (!activo || !video) return;
       try {
-        if (video.readyState >= 2) {
+        if (detector && video.readyState >= 2) {
           const [codigo] = await detector.detect(video);
           if (codigo?.rawValue && activo) {
             activo = false;
@@ -53,6 +58,13 @@ export default function EscanerCamara({ onCodigo, onClose }: Props) {
       }
       timer = setTimeout(buscar, 250);
     };
+
+    void (Detector.getSupportedFormats?.() ?? Promise.resolve(FORMATOS))
+      .catch(() => ["qr_code"])
+      .then(soportados => {
+        const formatos = FORMATOS.filter(f => soportados.includes(f));
+        detector = new Detector({ formats: formatos.length ? formatos : ["qr_code"] });
+      });
 
     navigator.mediaDevices
       .getUserMedia({ video: { facingMode: "environment" }, audio: false })
@@ -77,7 +89,7 @@ export default function EscanerCamara({ onCodigo, onClose }: Props) {
   return (
     <div className="fixed inset-0 z-50 bg-black flex flex-col">
       <div className="flex items-center justify-between p-4 text-white">
-        <p className="font-bold">Apunta al QR de la gaveta</p>
+        <p className="font-bold">Apunta al QR o al código de barras</p>
         <button onClick={onClose} className="p-2 rounded-full bg-white/10" aria-label="Cerrar cámara">
           <X className="w-6 h-6" />
         </button>

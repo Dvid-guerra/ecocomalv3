@@ -5,13 +5,14 @@ import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { collection, onSnapshot, addDoc, doc, updateDoc, deleteDoc } from "firebase/firestore";
 import Link from "next/link";
-import { Package, Truck, Plus, Trash2, Printer, Save, CheckCircle, Database, AlertTriangle, Pencil, ScanLine, Tags } from "lucide-react";
+import { Package, Truck, Plus, Trash2, Printer, Save, CheckCircle, Database, AlertTriangle, Pencil, ScanLine, Tags, ClipboardList } from "lucide-react";
 import type { Material, Proveedor, OrdenCompra, OrdenItem } from "@/types";
 import TabRecetas from "./TabRecetas";
 import MovimientoMaterialModal from "@/features/inventory/components/MovimientoMaterialModal";
 import HistorialMovimientos from "@/features/inventory/components/HistorialMovimientos";
 import AsistenteInventario from "@/features/agente/components/AsistenteInventario";
 import FichaMaterialModal from "@/features/inventory/components/FichaMaterialModal";
+import AvisoAuditoria from "@/features/inventory/components/AvisoAuditoria";
 import type { TipoMovimiento } from "@/features/inventory/domain/movimientos";
 import { esFamilia, FAMILIAS } from "@/features/inventory/domain/materiales";
 
@@ -221,7 +222,7 @@ export default function InventarioPage() {
   return (
     <div className="space-y-6">
       {/* Header Print-Hidden */}
-      <header className="print:hidden flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-3xl shadow-sm ring-1 ring-slate-200">
+      <header className="print:hidden flex flex-col lg:flex-row lg:flex-wrap lg:items-center justify-between gap-4 bg-white p-6 rounded-3xl shadow-sm ring-1 ring-slate-200">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center ring-1 ring-indigo-100">
             <Package className="w-6 h-6" />
@@ -232,12 +233,15 @@ export default function InventarioPage() {
           </div>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Link href="/dashboard/inventario/registro" className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold bg-emerald-600 text-white hover:bg-emerald-700">
             <ScanLine className="w-4 h-4" /> Punto de registro
           </Link>
           <Link href="/dashboard/inventario/etiquetas" className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold bg-white ring-1 ring-slate-200 text-slate-700 hover:bg-slate-50">
             <Tags className="w-4 h-4" /> Etiquetas QR
+          </Link>
+          <Link href="/dashboard/inventario/auditoria" className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold bg-white ring-1 ring-slate-200 text-slate-700 hover:bg-slate-50">
+            <ClipboardList className="w-4 h-4" /> Auditoría
           </Link>
         </div>
 
@@ -274,6 +278,8 @@ export default function InventarioPage() {
           </button>
         </div>
       </header>
+
+      <AvisoAuditoria />
 
       {/* TABS */}
       {activeTab === "inventario" && (

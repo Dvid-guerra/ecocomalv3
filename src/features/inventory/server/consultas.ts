@@ -187,6 +187,31 @@ export async function historialMovimientos(opciones: {
   };
 }
 
+export async function ultimasAuditorias() {
+  const snap = await adminDb.collection("auditorias_inventario").orderBy("iniciadaEn", "desc").limit(4).get();
+  return snap.docs.map(d => {
+    const a = d.data();
+    const totales = a.resumen?.totales;
+    return {
+      mes: a.mes,
+      estado: a.estado,
+      materialesEnCatalogo: a.totalMateriales,
+      contados: a.estado === "en_curso" ? Object.keys(a.conteos ?? {}).length : totales?.contados ?? 0,
+      conDiferencia: totales?.conDiferencia ?? null,
+      valorFaltante: totales?.valorFaltante ?? null,
+      valorSobrante: totales?.valorSobrante ?? null,
+      // Las 10 diferencias de mayor valor.
+      diferencias: (a.resumen?.lineas ?? [])
+        .filter((l: { diferencia: number }) => l.diferencia !== 0)
+        .slice(0, 10)
+        .map((l: { nombre: string; diferencia: number; unidad: string; valorDiferencia: number }) => ({
+          material: l.nombre, diferencia: l.diferencia, unidad: l.unidad, valor: l.valorDiferencia,
+        })),
+      cerradaPor: a.cerradaPorNombre ?? null,
+    };
+  });
+}
+
 export async function stockEstufas() {
   const snap = await adminDb.collection("inventario_stock").get();
   const porModelo = new Map(snap.docs.map(d => [d.id, Number(d.data().cantidad) || 0]));

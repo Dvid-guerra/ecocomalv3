@@ -249,8 +249,8 @@ export interface Material {
   familia?: string;
   /** Código de ubicación física, ej. "C-E1-N2-P03". */
   ubicacion?: string;
-  /** Peso de una pieza en gramos, para contar por diferencia de peso. */
-  pesoUnitarioG?: number;
+  /** Código de barras del empaque del proveedor (EAN/UPC/Code128), para escanearlo directo. */
+  codigoBarras?: string;
 }
 
 export interface OrdenItem {

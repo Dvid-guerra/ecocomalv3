@@ -1,14 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
-import { ArrowLeft, Camera, CheckCircle2, Maximize, ScanLine, UserRound } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Maximize, UserRound } from "lucide-react";
 import { db } from "@/lib/firebase";
 import type { Material, Pedido, Rol } from "@/types";
-import { normalizar } from "../../domain/texto";
-import { esFamilia, FAMILIAS, leerCodigoEscaneado } from "../../domain/materiales";
-import EscanerCamara, { camaraDisponible } from "./EscanerCamara";
+import BuscadorMaterial from "../BuscadorMaterial";
 import PasoCantidad, { type PersonaRegistro, type ResumenRegistro } from "./PasoCantidad";
 
 type Paso = "quien" | "material" | "cantidad" | "listo";
@@ -22,8 +20,6 @@ interface Persona extends PersonaRegistro {
 const INACTIVIDAD_MS = 2 * 60_000;
 const VOLVER_TRAS_REGISTRO_MS = 8_000;
 
-const sinSuscripcion = () => () => {};
-
 export default function PuntoRegistro({ materialInicial }: { materialInicial: string | null }) {
   const [personas, setPersonas] = useState<Persona[]>([]);
   const [materiales, setMateriales] = useState<Material[]>([]);
@@ -34,8 +30,6 @@ export default function PuntoRegistro({ materialInicial }: { materialInicial: st
   const [persona, setPersona] = useState<Persona | null>(null);
   const [materialId, setMaterialId] = useState<string | null>(materialInicial);
   const [resumen, setResumen] = useState<ResumenRegistro | null>(null);
-
-  const conCamara = useSyncExternalStore(sinSuscripcion, camaraDisponible, () => false);
 
   useEffect(() => {
     const falla = () => setErrorCarga("No se pudieron cargar los datos. Revisa la conexión.");
@@ -162,7 +156,10 @@ export default function PuntoRegistro({ materialInicial }: { materialInicial: st
       )}
 
       {paso === "material" && (
-        <PasoMaterial materiales={materiales} conCamara={conCamara} onElegir={elegirMaterial} />
+        <section className="space-y-4">
+          <h2 className="text-2xl font-bold text-slate-900">Escanear la gaveta o el empaque</h2>
+          <BuscadorMaterial materiales={materiales} onElegir={m => elegirMaterial(m.id)} />
+        </section>
       )}
 
       {paso === "cantidad" && persona && material && (
@@ -220,113 +217,3 @@ export default function PuntoRegistro({ materialInicial }: { materialInicial: st
   );
 }
 
-interface PasoMaterialProps {
-  materiales: Material[];
-  conCamara: boolean;
-  onElegir: (id: string) => void;
-}
-
-function PasoMaterial({ materiales, conCamara, onElegir }: PasoMaterialProps) {
-  const [texto, setTexto] = useState("");
-  const [aviso, setAviso] = useState<string | null>(null);
-  const [camara, setCamara] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const filtrados = useMemo(() => {
-    const q = normalizar(texto);
-    const lista = q
-      ? materiales.filter(m => {
-          const n = normalizar(`${m.nombre} ${m.ubicacion ?? ""}`);
-          return q.split(/\s+/).every(p => n.includes(p));
-        })
-      : materiales;
-    return [...lista].sort((a, b) => (a.ubicacion ?? "~").localeCompare(b.ubicacion ?? "~") || a.nombre.localeCompare(b.nombre, "es"));
-  }, [materiales, texto]);
-
-  /** Lo que manda el lector QR (escribe y da Enter), la cámara o la persona. */
-  const procesar = useCallback((entrada: string) => {
-    const codigo = leerCodigoEscaneado(entrada);
-    setAviso(null);
-    if (codigo.tipo === "material") {
-      if (materiales.some(m => m.id === codigo.id)) return onElegir(codigo.id);
-      setTexto("");
-      return setAviso("Ese QR no corresponde a ningún material del catálogo.");
-    }
-    if (codigo.tipo === "ubicacion") {
-      const enUbicacion = materiales.filter(m => m.ubicacion === codigo.codigo);
-      if (enUbicacion.length === 1) return onElegir(enUbicacion[0].id);
-      setTexto(codigo.codigo);
-      if (enUbicacion.length === 0) setAviso(`No hay material asignado a ${codigo.codigo}.`);
-      return;
-    }
-    const q = normalizar(codigo.texto);
-    const coincidencias = materiales.filter(m => normalizar(m.nombre).includes(q));
-    if (q && coincidencias.length === 1) onElegir(coincidencias[0].id);
-  }, [materiales, onElegir]);
-
-  const onCodigoCamara = useCallback((valor: string) => {
-    setCamara(false);
-    procesar(valor);
-  }, [procesar]);
-
-  return (
-    <section className="space-y-4">
-      <h2 className="text-2xl font-bold text-slate-900">Escanear la gaveta</h2>
-
-      <div className="flex gap-3">
-        <label className="relative flex-1">
-          <ScanLine className="absolute left-4 top-1/2 -translate-y-1/2 w-6 h-6 text-slate-400" />
-          <input
-            ref={inputRef}
-            autoFocus
-            value={texto}
-            onChange={e => {
-              setTexto(e.target.value);
-              setAviso(null);
-            }}
-            onKeyDown={e => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                procesar(texto);
-              }
-            }}
-            placeholder="Escanear QR o buscar por nombre"
-            className="w-full h-16 pl-14 pr-4 rounded-2xl border-slate-200 text-lg focus:ring-emerald-500 focus:border-emerald-500"
-          />
-        </label>
-        {conCamara && (
-          <button onClick={() => setCamara(true)} className="h-16 px-5 rounded-2xl bg-slate-900 text-white flex items-center gap-2 font-bold">
-            <Camera className="w-6 h-6" /> <span className="hidden sm:inline">Cámara</span>
-          </button>
-        )}
-      </div>
-
-      {aviso && <p className="rounded-2xl bg-amber-50 ring-1 ring-amber-200 text-amber-800 px-5 py-3">{aviso}</p>}
-
-      <ul className="space-y-2">
-        {filtrados.slice(0, 30).map(m => {
-          const familia = esFamilia(m.familia) ? FAMILIAS[m.familia] : null;
-          const stock = Number(m.stockActual ?? 0);
-          return (
-            <li key={m.id}>
-              <button
-                onClick={() => onElegir(m.id)}
-                className="w-full flex items-center gap-4 p-4 rounded-2xl bg-white ring-1 ring-slate-200 text-left active:bg-slate-100"
-              >
-                <span className="w-2.5 h-10 rounded-full shrink-0" style={{ backgroundColor: familia?.color ?? "#cbd5e1" }} />
-                <span className="flex-1 min-w-0">
-                  <span className="block text-base font-bold text-slate-900 truncate">{m.nombre}</span>
-                  <span className="block text-xs font-mono text-slate-500">{m.ubicacion ?? "Sin ubicación"}</span>
-                </span>
-                <span className={`font-mono text-lg font-bold ${stock <= Number(m.puntoReorden ?? 0) ? "text-red-600" : "text-slate-700"}`}>{stock}</span>
-              </button>
-            </li>
-          );
-        })}
-        {filtrados.length === 0 && <li className="text-slate-400 px-2">Sin resultados.</li>}
-      </ul>
-
-      {camara && <EscanerCamara onCodigo={onCodigoCamara} onClose={() => setCamara(false)} />}
-    </section>
-  );
-}

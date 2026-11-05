@@ -2,15 +2,10 @@
 
 import { useState } from "react";
 import { doc, updateDoc, deleteField } from "firebase/firestore";
-import { Scale, X } from "lucide-react";
+import { X } from "lucide-react";
 import { db } from "@/lib/firebase";
 import type { Material, Proveedor } from "@/types";
-import {
-  FAMILIAS,
-  LISTA_FAMILIAS,
-  normalizarUbicacion,
-  pesoUnitarioDesdeMuestra,
-} from "../domain/materiales";
+import { FAMILIAS, LISTA_FAMILIAS, normalizarCodigoBarras, normalizarUbicacion } from "../domain/materiales";
 
 interface Props {
   material: Material;
@@ -31,16 +26,13 @@ export default function FichaMaterialModal({ material, proveedores, onClose }: P
     puntoReorden: String(material.puntoReorden ?? 0),
     familia: material.familia ?? "",
     ubicacion: material.ubicacion ?? "",
-    pesoUnitarioG: material.pesoUnitarioG ? String(material.pesoUnitarioG) : "",
+    codigoBarras: material.codigoBarras ?? "",
   });
-  const [muestra, setMuestra] = useState({ piezas: "20", pesoG: "" });
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const set = (campo: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     setForm(f => ({ ...f, [campo]: e.target.value }));
-
-  const pesoMuestra = pesoUnitarioDesdeMuestra(Number(muestra.pesoG), Number(muestra.piezas));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,11 +43,7 @@ export default function FichaMaterialModal({ material, proveedores, onClose }: P
       setError("Ubicación inválida. Formato: C-E1-N2-P03 (zona, estante, nivel, posición).");
       return;
     }
-    const peso = form.pesoUnitarioG ? Number(form.pesoUnitarioG) : null;
-    if (peso !== null && !(peso > 0)) {
-      setError("El peso por pieza debe ser mayor a cero.");
-      return;
-    }
+    const codigoBarras = normalizarCodigoBarras(form.codigoBarras);
 
     setGuardando(true);
     try {
@@ -67,7 +55,7 @@ export default function FichaMaterialModal({ material, proveedores, onClose }: P
         puntoReorden: Math.max(0, Number(form.puntoReorden) || 0),
         familia: form.familia || deleteField(),
         ubicacion: ubicacion ?? deleteField(),
-        pesoUnitarioG: peso ?? deleteField(),
+        codigoBarras: codigoBarras || deleteField(),
       });
       onClose();
     } catch (err) {
@@ -147,30 +135,15 @@ export default function FichaMaterialModal({ material, proveedores, onClose }: P
           </div>
 
           <label className="block space-y-1">
-            <span className={etiqueta}>Peso por pieza (g)</span>
-            <input type="number" step="0.01" min="0" value={form.pesoUnitarioG} onChange={set("pesoUnitarioG")} placeholder="Para contar por peso" className={`${input} font-mono`} />
+            <span className={etiqueta}>Código de barras del proveedor</span>
+            <input
+              value={form.codigoBarras}
+              onChange={set("codigoBarras")}
+              placeholder="Escanear el empaque (opcional)"
+              className={`${input} font-mono`}
+            />
+            <span className="block text-xs text-slate-400">Con el cursor aquí, pasa el lector por el código del empaque.</span>
           </label>
-
-          <div className="flex flex-wrap items-end gap-2 text-sm">
-            <Scale className="w-4 h-4 text-slate-400 mb-2.5" />
-            <label className="space-y-1">
-              <span className={etiqueta}>Pesé</span>
-              <input type="number" min="1" step="1" value={muestra.piezas} onChange={e => setMuestra(m => ({ ...m, piezas: e.target.value }))} className={`${input} w-20 font-mono`} />
-            </label>
-            <span className="mb-2.5 text-slate-500">piezas =</span>
-            <label className="space-y-1">
-              <span className={etiqueta}>Gramos</span>
-              <input type="number" min="0" step="0.1" value={muestra.pesoG} onChange={e => setMuestra(m => ({ ...m, pesoG: e.target.value }))} className={`${input} w-24 font-mono`} />
-            </label>
-            <button
-              type="button"
-              disabled={!pesoMuestra}
-              onClick={() => pesoMuestra && setForm(f => ({ ...f, pesoUnitarioG: String(pesoMuestra) }))}
-              className="mb-0.5 px-3 py-2 rounded-xl text-xs font-bold bg-white ring-1 ring-slate-200 text-slate-700 hover:bg-slate-100 disabled:opacity-40"
-            >
-              {pesoMuestra ? `Usar ${pesoMuestra} g` : "Calcular"}
-            </button>
-          </div>
         </div>
 
         {error && <p className="text-sm text-red-600">{error}</p>}

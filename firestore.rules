@@ -131,6 +131,12 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Auditoría mensual de inventario. Conteos, cierre y ajustes los escribe solo el servidor.
+    match /auditorias_inventario/{id} {
+      allow read: if operational();
+      allow write: if false;
+    }
+
     match /proveedores/{id} {
       allow read, write: if operational();
     }

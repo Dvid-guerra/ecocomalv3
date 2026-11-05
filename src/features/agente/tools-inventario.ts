@@ -9,6 +9,7 @@ import {
   historialMovimientos,
   materialesBajoMinimo,
   stockEstufas,
+  ultimasAuditorias,
 } from "@/features/inventory/server/consultas";
 
 const modelo = z.enum(MODELOS).describe("Modelo de estufa");
@@ -70,6 +71,13 @@ export const toolsInventario = {
       limite: z.number().int().min(1).max(50).default(20).describe("Máximo de movimientos a listar"),
     }),
     execute: medido("historial_movimientos", historialMovimientos),
+  }),
+
+  auditorias_inventario: tool({
+    description:
+      "Últimas auditorías mensuales de inventario (conteo físico): estado, avance, faltantes y sobrantes en quetzales y los materiales con más diferencia.",
+    inputSchema: z.object({}),
+    execute: medido("auditorias_inventario", () => ultimasAuditorias()),
   }),
 
   stock_estufas: tool({

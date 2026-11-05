@@ -90,7 +90,7 @@ export default function EtiquetasQR() {
           </select>
           <button onClick={() => setSeleccion(new Set([...marcados, ...visibles.map(m => m.id)]))} className="px-3 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-700">Marcar visibles</button>
           <button onClick={() => setSeleccion(new Set([...marcados].filter(id => !visibles.some(m => m.id === id))))} className="px-3 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-700">Desmarcar visibles</button>
-          <p className="text-xs text-slate-400">La ubicación, familia y peso se editan en Catálogo Base → lápiz.</p>
+          <p className="text-xs text-slate-400">La ubicación, familia y código de barras se editan en Catálogo Base → lápiz.</p>
         </div>
         <ul className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2 max-h-72 overflow-y-auto">
           {visibles.map(m => (
@@ -122,7 +122,6 @@ export default function EtiquetasQR() {
                   {fam?.etiqueta ?? "Sin familia"}
                   <br />
                   Mín. {m.puntoReorden ?? 0} {m.unidadMedida}
-                  {m.pesoUnitarioG ? ` · ${m.pesoUnitarioG} g/pza` : ""}
                 </p>
               </div>
               <div

@@ -38,7 +38,7 @@ export interface MovimientoInput {
   cantidad: number;
   motivo: MotivoMovimiento;
   nota?: string;
-  referencia?: { tipo: "pedido" | "orden_compra"; id: string };
+  referencia?: { tipo: "pedido" | "orden_compra" | "auditoria"; id: string };
 }
 
 export interface ResultadoMovimiento {
