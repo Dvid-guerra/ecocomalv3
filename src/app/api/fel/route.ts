@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminAuth, adminDb } from "@/lib/firebase-admin";
+import { verificarMismoOrigen, ErrorApi } from "@/lib/api-auth";
 import { calcularImportesFel, validarEntradaFel, type FelInput } from "@/lib/fel";
 
 const COOKIE_NAME = "ecocomal_session";
@@ -12,17 +13,12 @@ function jsonError(error: string, status: number) {
   );
 }
 
-function solicitudMismoOrigen(request: NextRequest) {
-  const fetchSite = request.headers.get("sec-fetch-site");
-  if (fetchSite === "cross-site") return false;
-
-  const origin = request.headers.get("origin");
-  return !origin || origin === new URL(request.url).origin;
-}
-
 export async function POST(request: NextRequest) {
-  if (!solicitudMismoOrigen(request)) {
-    return jsonError("Origen de solicitud no permitido.", 403);
+  try {
+    verificarMismoOrigen(request);
+  } catch (error) {
+    if (error instanceof ErrorApi) return jsonError(error.message, error.status);
+    throw error;
   }
 
   const contentLength = Number(request.headers.get("content-length") ?? 0);

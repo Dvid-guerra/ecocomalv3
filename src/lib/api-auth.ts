@@ -2,6 +2,7 @@ import "server-only";
 import type { NextRequest } from "next/server";
 import { adminAuth, adminDb } from "@/lib/firebase-admin";
 import type { Rol } from "@/types";
+import { comprobarOrigen } from "@/lib/origen";
 
 const COOKIE_NAME = "ecocomal_session";
 
@@ -20,15 +21,13 @@ export class ErrorApi extends Error {
   }
 }
 
-/** Rechaza solicitudes de otros sitios (protección CSRF básica). */
+/** Valida el origen público antes de autenticar o ejecutar escrituras. */
 export function verificarMismoOrigen(request: NextRequest) {
-  if (request.headers.get("sec-fetch-site") === "cross-site") {
-    throw new ErrorApi("Origen de solicitud no permitido.", 403);
-  }
-  const origin = request.headers.get("origin");
-  if (origin && origin !== new URL(request.url).origin) {
-    throw new ErrorApi("Origen de solicitud no permitido.", 403);
-  }
+  const fallo = comprobarOrigen(request, {
+    appOrigin: process.env.APP_ORIGIN,
+    produccion: process.env.NODE_ENV === "production",
+  });
+  if (fallo) throw new ErrorApi(fallo.error, fallo.status);
 }
 
 /** Verifica la cookie de sesión, que la cuenta esté activa y que tenga uno de los roles. */
