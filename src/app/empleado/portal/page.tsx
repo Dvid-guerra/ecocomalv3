@@ -30,15 +30,29 @@ import {
   Timer,
   AlertCircle,
   CheckCircle2,
-  Loader2,
   TrendingUp,
-  Square,
   Check,
-  Phone,
   Truck,
-  MapPin,
-  Package,
+  LogIn,
+  Target,
+  Inbox,
 } from "lucide-react";
+
+import {
+  Card,
+  Button,
+  Badge,
+  Tabs,
+  FormField,
+  TextInput,
+  SelectInput,
+  TextArea,
+  EmptyState,
+  Aviso,
+  Skeleton,
+  type Tono,
+} from "@/components/ui";
+import { cn } from "@/lib/cn";
 
 // ═══════════════════════════════════════════════════════
 // TIPOS
@@ -69,10 +83,10 @@ interface LogInterno {
   mensaje: string;
 }
 
-const PRIORIDAD_ESTILOS: Record<Prioridad, string> = {
-  Alta:  "bg-red-50 text-red-700 ring-1 ring-red-200/60",
-  Media: "bg-amber-50 text-amber-700 ring-1 ring-amber-200/60",
-  Baja:  "bg-slate-100 text-slate-600 ring-1 ring-slate-200/60",
+const PRIORIDAD_TONO: Record<Prioridad, Tono> = {
+  Alta:  "risk",
+  Media: "warn",
+  Baja:  "neutral",
 };
 
 const TABS: { id: ActiveTab; label: string; icon: React.ElementType }[] = [
@@ -129,17 +143,18 @@ function getDiaSemanaCorta(): string {
 
 function SkeletonPortal() {
   return (
-    <div className="min-h-screen bg-slate-50 animate-pulse">
+    <div className="min-h-screen bg-canvas">
       <div className="max-w-2xl mx-auto px-4 pt-8 pb-6 space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-4">
           <div className="space-y-2">
-            <div className="h-5 w-40 bg-slate-200 rounded-lg" />
-            <div className="h-3 w-28 bg-slate-100 rounded-md" />
+            <Skeleton className="h-5 w-40 rounded-control" />
+            <Skeleton className="h-3 w-28 rounded-control" />
           </div>
-          <div className="h-8 w-24 bg-slate-200 rounded-xl" />
+          <Skeleton className="h-9 w-24 rounded-control" />
         </div>
-        <div className="h-10 bg-slate-200 rounded-xl" />
-        <div className="h-72 bg-slate-100 rounded-3xl" />
+        <Skeleton className="h-11 rounded-control" />
+        <Skeleton className="h-72 rounded-panel" />
+        <span className="sr-only">Cargando tu portal…</span>
       </div>
     </div>
   );
@@ -430,30 +445,34 @@ export default function EmpleadoPortalPage() {
   // ─────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-canvas">
 
       {/* ── ENCABEZADO MÓVIL OPTIMIZADO ── */}
-      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-200/60 shadow-sm">
+      <header className="sticky top-0 z-40 bg-surface/85 backdrop-blur-md border-b border-line">
         <div className="max-w-2xl mx-auto px-4 h-16 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-8 h-8 rounded-xl bg-slate-900 flex items-center justify-center shrink-0">
-              <Flame className="w-4 h-4 text-white" strokeWidth={1.5} />
-            </div>
+            <span
+              className="w-9 h-9 rounded-control bg-action flex items-center justify-center shrink-0"
+              aria-hidden="true"
+            >
+              <Flame className="w-4 h-4 text-white" strokeWidth={2} />
+            </span>
             <div className="min-w-0">
-              <p className="text-sm font-bold text-slate-900 tracking-tight leading-none truncate">
+              <p className="text-sm font-bold text-ink leading-tight truncate">
                 Hola, {nombreCorto}
               </p>
-              <span className="inline-flex items-center mt-0.5 px-2 py-0.5 rounded-md bg-slate-100 text-slate-500 text-[10px] font-semibold ring-1 ring-slate-200/60">
-                Colaborador de Planta
-              </span>
+              <p className="text-xs text-ink-muted">Colaborador de planta</p>
             </div>
           </div>
           <button
+            type="button"
             onClick={async () => { await cerrarSesion(); router.replace("/login"); }}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium text-slate-500 hover:text-red-600 hover:bg-red-50 hover:ring-1 hover:ring-red-200/60 transition-all duration-150 active:scale-95"
+            className="touch shrink-0 inline-flex items-center gap-1.5 px-3 rounded-control text-xs font-semibold text-ink-muted hover:text-risk hover:bg-risk-surface transition-colors active:scale-95"
           >
-            <LogOut className="w-3.5 h-3.5" strokeWidth={1.5} />
-            <span className="hidden xs:inline">Salir</span>
+            <LogOut className="w-4 h-4" strokeWidth={1.5} aria-hidden="true" />
+            {/* El breakpoint `xs` no existe en Tailwind: esta etiqueta
+                llevaba `hidden xs:inline` y no se mostraba nunca. */}
+            Salir
           </button>
         </div>
       </header>
@@ -461,25 +480,15 @@ export default function EmpleadoPortalPage() {
       <main className="max-w-2xl mx-auto px-4 py-6 space-y-5">
 
         {/* ── BARRA DE PESTAÑAS ── */}
-        <nav aria-label="Portal de autoservicio" className="bg-slate-100/80 p-1 flex gap-1.5 overflow-x-auto ring-1 ring-slate-200/40 rounded-xl">
-          {TABS.map(({ id, label, icon: Icon }) => (
-            <button
-              key={id}
-              onClick={() => setActiveTab(id)}
-              className={`flex items-center gap-1.5 whitespace-nowrap flex-1 justify-center transition-all duration-200 ${
-                activeTab === id
-                  ? "bg-white text-slate-900 font-semibold shadow-xs ring-1 ring-slate-200/80 rounded-lg px-3 py-2 text-xs"
-                  : "text-slate-500 hover:text-slate-800 hover:bg-white/50 rounded-lg px-3 py-2 text-xs"
-              }`}
-            >
-              <Icon className="w-3.5 h-3.5 shrink-0" strokeWidth={1.5} />
-              {label}
-            </button>
-          ))}
-        </nav>
+        <Tabs
+          etiqueta="Portal de autoservicio"
+          value={activeTab}
+          onChange={setActiveTab}
+          items={TABS}
+        />
 
         {/* ── TARJETA CONTENEDORA PRINCIPAL ── */}
-        <div className="bg-gradient-to-b from-white to-slate-50/50 rounded-3xl p-6 ring-1 ring-slate-200/60 shadow-inner shadow-slate-100/40">
+        <Card nivel="panel" className="p-5 sm:p-6">
 
           {/* ══════════════════════════════════
               PESTAÑA 1 — ASISTENCIA
@@ -489,10 +498,10 @@ export default function EmpleadoPortalPage() {
 
               {/* Reloj en vivo */}
               <div className="text-center space-y-1">
-                <p className="text-xs font-medium text-slate-400 capitalize">{fechaViva}</p>
-                <p className="text-5xl font-bold font-mono text-slate-900 tracking-tight tabular-nums">{horaViva}</p>
+                <p className="text-xs font-medium text-ink-muted capitalize">{fechaViva}</p>
+                <p className="nums text-5xl font-bold text-ink leading-none">{horaViva}</p>
                 {jornandaActiva && horaEntrada && (
-                  <p className="text-xs text-emerald-600 font-semibold">
+                  <p className="nums text-xs text-ok font-semibold">
                     Jornada iniciada a las {horaEntrada}
                   </p>
                 )}
@@ -500,54 +509,57 @@ export default function EmpleadoPortalPage() {
 
               {/* Clock-in */}
               {!jornandaActiva && (
-                <button
+                <Button
                   onClick={handleClockIn}
-                  className="w-full flex items-center justify-center gap-3 py-5 rounded-2xl bg-gradient-to-b from-emerald-500 to-emerald-600 text-white font-bold text-lg shadow-lg shadow-emerald-200 hover:shadow-xl hover:from-emerald-400 hover:to-emerald-500 active:scale-[0.98] transition-all duration-200"
+                  ancho
+                  className="min-h-16 text-base"
+                  iconLeft={<Timer className="w-5 h-5" strokeWidth={2} />}
                 >
-                  <Timer className="w-6 h-6" strokeWidth={1.5} />
-                  ⏱️ Iniciar Jornada (Clock-In)
-                </button>
+                  Iniciar jornada
+                </Button>
               )}
 
               {/* Formulario de cierre de turno */}
               {jornandaActiva && (
                 <form onSubmit={handleClockOut} className="space-y-5">
-                  <div className="flex items-center gap-2 p-3.5 rounded-2xl bg-emerald-50 ring-1 ring-emerald-200/60">
-                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                    <p className="text-sm font-semibold text-emerald-800">Jornada en curso — completa la bitácora para finalizar</p>
+                  <div className="flex items-center gap-2.5 px-3.5 py-3 rounded-control bg-ok-surface ring-1 ring-ok-line">
+                    <span className="w-2 h-2 rounded-full bg-ok animate-skeleton shrink-0" aria-hidden="true" />
+                    <p className="text-sm font-semibold text-ok">
+                      Jornada en curso — completa la bitácora para finalizar
+                    </p>
                   </div>
 
-                  <div className="space-y-2">
-                    <label htmlFor="bitacora-turno" className="flex items-center gap-2 text-sm font-semibold text-slate-800">
-                      <FileText className="w-4 h-4 text-slate-500" strokeWidth={1.5} />
-                      Explicación detallada de lo realizado en su turno (Bitácora)
-                      <span className="text-red-500">*</span>
-                    </label>
-                    <textarea
+                  <FormField
+                    label="Bitácora del turno"
+                    htmlFor="bitacora-turno"
+                    pista="Describe lo que hiciste hoy. Es obligatoria para marcar la salida."
+                  >
+                    <TextArea
                       id="bitacora-turno"
                       rows={4}
                       value={bitacoraTexto}
                       onChange={(e) => setBitacoraTexto(e.target.value)}
                       disabled={isSubmittingAsistencia}
-                      placeholder="Describe detalladamente las actividades realizadas..."
-                      className="w-full px-4 py-3 rounded-xl border border-slate-200/80 bg-white text-slate-900 text-sm placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-slate-400/60 transition-all disabled:opacity-50"
+                      required
+                      placeholder="Ej. Soldé 12 bases y preparé la carga de Sololá."
                     />
-                  </div>
+                  </FormField>
 
-                  <button
+                  <Button
                     type="submit"
-                    disabled={!canClockOut || isSubmittingAsistencia}
-                    className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-gradient-to-b from-red-500 to-red-600 text-white font-bold text-sm shadow-md hover:from-red-400 hover:to-red-500 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
+                    variante="danger"
+                    ancho
+                    className="min-h-14"
+                    disabled={!canClockOut}
+                    cargando={isSubmittingAsistencia}
+                    iconLeft={<LogOut className="w-4 h-4" strokeWidth={2} />}
                   >
-                    {isSubmittingAsistencia ? (
-                      <><Loader2 className="w-4 h-4 animate-spin" strokeWidth={1.5} /> Marcando salida...</>
-                    ) : (
-                      <>🛑 Finalizar Jornada (Clock-Out)</>
-                    )}
-                  </button>
+                    {isSubmittingAsistencia ? "Marcando salida…" : "Finalizar jornada"}
+                  </Button>
+
                   {!canClockOut && !isSubmittingAsistencia && (
-                    <p className="text-xs text-slate-400 text-center flex items-center justify-center gap-1">
-                      <AlertCircle className="w-3.5 h-3.5" strokeWidth={1.5} />
+                    <p className="text-xs text-ink-muted text-center flex items-center justify-center gap-1.5">
+                      <AlertCircle className="w-3.5 h-3.5 shrink-0" strokeWidth={1.5} aria-hidden="true" />
                       Completa la bitácora para marcar la salida.
                     </p>
                   )}
@@ -555,30 +567,40 @@ export default function EmpleadoPortalPage() {
               )}
 
               {/* Historial minimalista */}
-              <div className="space-y-3 pt-4 border-t border-slate-100">
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-2">
-                  <CalendarDays className="w-3.5 h-3.5" strokeWidth={1.5} />
-                  Turnos Pasados
+              <div className="space-y-3 pt-4 border-t border-line">
+                <p className="text-xs font-semibold text-ink-muted uppercase tracking-wider flex items-center gap-2">
+                  <CalendarDays className="w-3.5 h-3.5" strokeWidth={1.5} aria-hidden="true" />
+                  Turnos pasados
                 </p>
                 <div className="space-y-2">
                   {historialAsistencia.map((r) => (
-                    <div key={r.id} className="rounded-2xl ring-1 ring-slate-200/60 bg-slate-50/60 px-4 py-3 space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold text-slate-700">{formatFecha(r.fecha)}</span>
-                        <div className="flex items-center gap-3 text-xs font-mono text-slate-500">
-                          <span className="text-emerald-700">↓ {r.entrada}</span>
+                    <div key={r.id} className="rounded-card ring-1 ring-line bg-sunken px-4 py-3 space-y-1.5">
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-xs font-semibold text-ink-body">{formatFecha(r.fecha)}</span>
+                        <div className="flex items-center gap-3 text-xs font-semibold shrink-0">
+                          <span className="nums text-ok inline-flex items-center gap-1">
+                            <LogIn className="w-3.5 h-3.5" strokeWidth={2} aria-hidden="true" />
+                            <span className="sr-only">Entrada: </span>{r.entrada}
+                          </span>
                           {r.salida ? (
-                            <span className="text-red-600">↑ {r.salida}</span>
+                            <span className="nums text-ink-muted inline-flex items-center gap-1">
+                              <LogOut className="w-3.5 h-3.5" strokeWidth={2} aria-hidden="true" />
+                              <span className="sr-only">Salida: </span>{r.salida}
+                            </span>
                           ) : (
-                            <span className="text-amber-500 font-sans font-bold">En turno</span>
+                            <Badge tono="warn">En turno</Badge>
                           )}
                         </div>
                       </div>
-                      {r.bitacora && <p className="text-xs text-slate-500 line-clamp-2">{r.bitacora}</p>}
+                      {r.bitacora && <p className="text-xs text-ink-muted line-clamp-2">{r.bitacora}</p>}
                     </div>
                   ))}
                   {historialAsistencia.length === 0 && (
-                    <p className="text-sm text-center py-4 text-slate-400">Sin registros recientes.</p>
+                    <EmptyState
+                      icono={Clock}
+                      titulo="Sin turnos registrados"
+                      descripcion="Cuando inicies y cierres tu primera jornada, el historial aparecerá aquí."
+                    />
                   )}
                 </div>
               </div>
@@ -591,35 +613,67 @@ export default function EmpleadoPortalPage() {
           {activeTab === "plan" && (
             <div className="space-y-5">
               <div className="flex items-center gap-2">
-                <CalendarDays className="w-5 h-5 text-slate-600" strokeWidth={1.5} />
-                <h2 className="text-base font-bold text-slate-950 tracking-tight">Mi Plan Semanal</h2>
+                <CalendarDays className="w-5 h-5 text-ink-muted" strokeWidth={1.5} aria-hidden="true" />
+                <h2 className="text-base font-semibold text-ink">Mi plan semanal</h2>
               </div>
-               
+
               {bloquesSemana.length === 0 ? (
-                <div className="text-center py-10 bg-slate-50/50 rounded-2xl ring-1 ring-slate-200/60 border border-dashed border-slate-300">
-                  <CalendarDays className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                  <p className="text-sm font-semibold text-slate-500">No hay planificación asignada para esta semana.</p>
-                </div>
+                <EmptyState
+                  icono={CalendarDays}
+                  titulo="Sin planificación esta semana"
+                  descripcion="Cuando tu supervisor te asigne metas de producción, aparecerán aquí repartidas por día."
+                />
               ) : (
                 <div className="space-y-4">
                   {bloquesSemana.map(bloque => (
-                    <div key={bloque.id} className={`p-4 rounded-2xl ring-1 shadow-sm overflow-hidden ${bloque.esUrgente ? "bg-red-50/50 ring-red-200/60" : "bg-white ring-slate-200/60"}`}>
+                    <div
+                      key={bloque.id}
+                      className={cn(
+                        "p-4 rounded-card ring-1 shadow-card",
+                        bloque.esUrgente ? "bg-risk-surface ring-risk-line" : "bg-surface ring-line",
+                      )}
+                    >
                       <div className="mb-3">
-                        <div className="flex items-center justify-between">
-                          <h3 className="text-sm font-bold text-slate-900">{bloque.modelo}</h3>
-                          {bloque.esUrgente && <span className="text-[10px] uppercase font-bold text-red-600 bg-red-100 px-2 py-0.5 rounded-md">Urgente</span>}
+                        <div className="flex items-center justify-between gap-2">
+                          <h3 className="text-sm font-semibold text-ink">{bloque.modelo}</h3>
+                          {bloque.esUrgente && <Badge tono="risk">Urgente</Badge>}
                         </div>
-                        <p className="text-xs text-slate-500 mt-1">Área: {bloque.area} | Total semanal: <span className="font-semibold text-slate-700">{bloque.unidadesObjetivo}</span> uds</p>
+                        <p className="text-xs text-ink-muted mt-1">
+                          {bloque.area} · Total semanal:{" "}
+                          <span className="nums font-semibold text-ink-body">{bloque.unidadesObjetivo}</span> uds
+                        </p>
                       </div>
-                       
+
                       <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
                         {["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"].map((dia) => {
                           const isHoy = getDiaSemanaCorta() === dia;
                           const meta = bloque.distribucionDiaria?.[dia] || 0;
                           return (
-                            <div key={dia} className={`flex flex-col items-center justify-center p-2 rounded-xl border ${isHoy ? 'border-blue-400 bg-blue-50' : 'border-slate-100 bg-slate-50/80'}`}>
-                              <span className={`text-[10px] uppercase font-semibold ${isHoy ? 'text-blue-600' : 'text-slate-400'}`}>{dia}</span>
-                              <span className={`text-lg font-bold ${meta > 0 ? (bloque.esUrgente ? 'text-red-600' : 'text-slate-800') : 'text-slate-300'}`}>{meta}</span>
+                            <div
+                              key={dia}
+                              aria-current={isHoy ? "date" : undefined}
+                              className={cn(
+                                "flex flex-col items-center justify-center py-2 rounded-control ring-1",
+                                /* Hoy se marca con el grafito de la acción, no con
+                                   un azul que en el resto del sistema significa
+                                   "salida de inventario". */
+                                isHoy ? "ring-action bg-surface" : "ring-line bg-sunken",
+                              )}
+                            >
+                              <span className={cn(
+                                "text-xs font-semibold uppercase",
+                                isHoy ? "text-ink" : "text-ink-muted",
+                              )}>
+                                {dia}
+                              </span>
+                              <span className={cn(
+                                "nums text-lg font-bold",
+                                meta === 0
+                                  ? "text-ink-muted"
+                                  : bloque.esUrgente ? "text-risk" : "text-ink",
+                              )}>
+                                {meta}
+                              </span>
                             </div>
                           )
                         })}
@@ -636,14 +690,17 @@ export default function EmpleadoPortalPage() {
           ══════════════════════════════════ */}
           {activeTab === "tareas" && (
             <div className="space-y-5">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
-                  <CheckSquare className="w-5 h-5 text-slate-600" strokeWidth={1.5} />
-                  <h2 className="text-base font-bold text-slate-950 tracking-tight">Tareas de Hoy</h2>
+                  <CheckSquare className="w-5 h-5 text-ink-muted" strokeWidth={1.5} aria-hidden="true" />
+                  <h2 className="text-base font-semibold text-ink">Tareas de hoy</h2>
                 </div>
-                <span className="text-xs font-mono bg-slate-100 text-slate-600 px-2.5 py-1 rounded-lg ring-1 ring-slate-200/60">
-                  {tareasCompletadasHoy} / {tareas.length} completadas
-                </span>
+                <Badge
+                  tono={tareas.length > 0 && tareasCompletadasHoy === tareas.length ? "ok" : "neutral"}
+                  numerico
+                >
+                  {tareasCompletadasHoy} / {tareas.length} hechas
+                </Badge>
               </div>
 
               {/* BANNERS DE METAS DEL DÍA */}
@@ -651,16 +708,31 @@ export default function EmpleadoPortalPage() {
                 const metaHoy = bloque.distribucionDiaria[getDiaSemanaCorta()];
                 const isUrgente = bloque.esUrgente;
                 return (
-                  <div key={`meta-${bloque.id}`} className={`p-4 rounded-2xl ring-1 shadow-sm flex items-center gap-3 ${isUrgente ? "bg-red-50 ring-red-200/60" : "bg-blue-50 ring-blue-200/60"}`}>
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${isUrgente ? "bg-red-100 text-red-600" : "bg-blue-100 text-blue-600"}`}>
-                      <Flame className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <p className={`text-xs font-bold uppercase tracking-wider ${isUrgente ? "text-red-700" : "text-blue-700"}`}>
-                        🎯 Meta de Hoy {isUrgente && "- URGENTE"}
+                  <div
+                    key={`meta-${bloque.id}`}
+                    className={cn(
+                      "p-4 rounded-card ring-1 flex items-center gap-3",
+                      isUrgente ? "bg-risk-surface ring-risk-line" : "bg-sunken ring-line",
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "w-10 h-10 rounded-full flex items-center justify-center shrink-0 ring-1",
+                        isUrgente ? "bg-surface text-risk ring-risk-line" : "bg-surface text-ink-body ring-line",
+                      )}
+                      aria-hidden="true"
+                    >
+                      <Target className="w-5 h-5" strokeWidth={1.5} />
+                    </span>
+                    <div className="min-w-0">
+                      <p className={cn(
+                        "text-xs font-bold uppercase tracking-wider",
+                        isUrgente ? "text-risk" : "text-ink-muted",
+                      )}>
+                        Meta de hoy{isUrgente && " · Urgente"}
                       </p>
-                      <p className={`text-sm font-semibold mt-0.5 ${isUrgente ? "text-red-900" : "text-blue-900"}`}>
-                        Ensamblar {metaHoy} unidades de {bloque.modelo}
+                      <p className="text-sm font-semibold mt-0.5 text-ink">
+                        Ensamblar <span className="nums">{metaHoy}</span> unidades de {bloque.modelo}
                       </p>
                     </div>
                   </div>
@@ -670,38 +742,57 @@ export default function EmpleadoPortalPage() {
               {/* Lista de tareas */}
               <div className="space-y-2">
                 {tareas.length === 0 && (
-                  <div className="text-center py-10 bg-slate-50/50 rounded-2xl ring-1 ring-slate-200/60 border border-dashed border-slate-300">
-                    <CheckSquare className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                    <p className="text-sm font-semibold text-slate-500">No tienes tareas asignadas por ahora.</p>
-                  </div>
+                  <EmptyState
+                    icono={CheckSquare}
+                    titulo="No tienes tareas asignadas"
+                    descripcion="Tu supervisor asigna las tareas del día desde Planta. Aparecerán aquí al instante."
+                  />
                 )}
                 {tareas.map((tarea) => {
                   const completada = tarea.completada;
                   return (
                     <button
                       key={tarea.id}
+                      type="button"
+                      aria-pressed={completada}
                       onClick={() => toggleTarea(tarea.id, completada)}
-                      className={`w-full flex items-start gap-3 px-4 py-3.5 rounded-2xl ring-1 text-left transition-all duration-200 ${
+                      className={cn(
+                        "w-full flex items-start gap-3 px-4 py-3.5 rounded-card ring-1 text-left",
+                        "transition-[background-color,box-shadow] duration-200",
                         completada
-                          ? "bg-slate-50 ring-slate-200/40 opacity-50"
-                          : "bg-white ring-slate-200/60 hover:ring-slate-300/70 hover:bg-slate-50/50 active:scale-[0.99]"
-                      }`}
+                          ? "bg-sunken ring-line"
+                          : "bg-surface ring-line hover:ring-line-strong active:scale-[0.99]",
+                      )}
                     >
                       {/* Checkbox interactivo */}
-                      <div className={`mt-0.5 w-5 h-5 rounded-md flex items-center justify-center shrink-0 ring-1 transition-all ${
-                        completada ? "bg-emerald-500 ring-emerald-500" : "bg-white ring-slate-300"
-                      }`}>
-                        {completada ? <Check className="w-3 h-3 text-white" strokeWidth={2.5} /> : <Square className="w-3 h-3 text-transparent" strokeWidth={0} />}
-                      </div>
-                      <div className="flex-1 min-w-0 space-y-1">
-                        <p className={`text-sm font-medium leading-snug ${completada ? "line-through text-slate-400" : "text-slate-900"}`}>
+                      <span
+                        className={cn(
+                          "mt-0.5 w-5 h-5 rounded-md flex items-center justify-center shrink-0 ring-1 transition-colors",
+                          completada ? "bg-ok ring-ok text-white" : "bg-surface ring-line-strong",
+                        )}
+                        aria-hidden="true"
+                      >
+                        {completada && <Check className="w-3 h-3" strokeWidth={3} />}
+                      </span>
+                      <span className="flex-1 min-w-0 space-y-1.5">
+                        <span className={cn(
+                          "block text-sm font-medium leading-snug",
+                          completada ? "line-through text-ink-muted" : "text-ink",
+                        )}>
                           {tarea.descripcion}
-                        </p>
-                        <span className={`inline-flex text-xs font-semibold px-2 py-0.5 rounded-md ${PRIORIDAD_ESTILOS[tarea.prioridad]}`}>
-                          {tarea.prioridad}
                         </span>
-                      </div>
-                      <ChevronRight className={`w-4 h-4 shrink-0 mt-0.5 transition-transform ${completada ? "rotate-90 text-slate-300" : "text-slate-400"}`} strokeWidth={1.5} />
+                        <Badge tono={completada ? "neutral" : PRIORIDAD_TONO[tarea.prioridad]}>
+                          {tarea.prioridad}
+                        </Badge>
+                      </span>
+                      <ChevronRight
+                        className={cn(
+                          "w-4 h-4 shrink-0 mt-0.5 text-ink-muted transition-transform duration-200",
+                          completada && "rotate-90",
+                        )}
+                        strokeWidth={1.5}
+                        aria-hidden="true"
+                      />
                     </button>
                   );
                 })}
@@ -715,48 +806,49 @@ export default function EmpleadoPortalPage() {
           {activeTab === "rendimiento" && (
             <div className="space-y-6">
               <div className="flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 text-slate-600" strokeWidth={1.5} />
-                <h2 className="text-base font-bold text-slate-950 tracking-tight">Métricas Individuales</h2>
+                <TrendingUp className="w-5 h-5 text-ink-muted" strokeWidth={1.5} aria-hidden="true" />
+                <h2 className="text-base font-semibold text-ink">Mis métricas</h2>
               </div>
 
-              {/* Barra de meta de estufas */}
-              <div className="space-y-3 p-5 rounded-2xl bg-slate-50 ring-1 ring-slate-200/60">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-semibold text-slate-800">Estufas Ensambladas por Mí Este Mes</p>
-                  <span className="font-mono text-sm font-bold text-slate-900">12 <span className="text-slate-400 font-normal">/ 30</span></span>
-                </div>
-                <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
-                  <div className="h-full w-[40%] bg-gradient-to-r from-blue-400 to-blue-600 rounded-full transition-all duration-700" />
-                </div>
-                <p className="text-xs text-slate-500">40% completado · Faltan 18 unidades</p>
-              </div>
-
-              {/* Micro-KPIs font-mono */}
+              {/* Métricas reales, calculadas de las suscripciones de Firestore. */}
               <div className="grid grid-cols-2 gap-3">
-                <div className="bg-emerald-50 rounded-2xl p-4 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <p className="text-xs font-medium text-emerald-800">Tareas Completadas Hoy</p>
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" strokeWidth={1.5} />
+                <div className="bg-sunken ring-1 ring-line rounded-card p-4 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-xs font-medium text-ink-muted">Tareas hechas hoy</p>
+                    <CheckCircle2 className="w-4 h-4 text-ink-muted shrink-0" strokeWidth={1.5} aria-hidden="true" />
                   </div>
-                  <p className="text-3xl font-bold font-mono text-emerald-700 leading-none">{tareasCompletadasHoy}</p>
+                  <p className="nums text-3xl font-bold text-ink leading-none">{tareasCompletadasHoy}</p>
                 </div>
-                <div className="bg-blue-50 rounded-2xl p-4 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <p className="text-xs font-medium text-blue-800">Jornadas Registradas</p>
-                    <CalendarDays className="w-4 h-4 text-blue-600 shrink-0" strokeWidth={1.5} />
+                <div className="bg-sunken ring-1 ring-line rounded-card p-4 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-xs font-medium text-ink-muted">Jornadas registradas</p>
+                    <CalendarDays className="w-4 h-4 text-ink-muted shrink-0" strokeWidth={1.5} aria-hidden="true" />
                   </div>
-                  <p className="text-3xl font-bold font-mono text-blue-700 leading-none">{historialAsistencia.length}</p>
+                  <p className="nums text-3xl font-bold text-ink leading-none">{historialAsistencia.length}</p>
                 </div>
               </div>
+
+              {/*
+                Aquí vivía una barra de "Estufas ensambladas por mí este mes"
+                con 12 / 30, 40 % y "faltan 18 unidades" escritos a mano en el
+                JSX. Ninguna de esas cifras salía de Firestore, así que el
+                portal le mostraba al colaborador un rendimiento inventado.
+                Se retira hasta que se conecte a `registros_produccion`
+                (RegistroProduccion.empleadoIds / unidadesProducidas).
+              */}
+              <Aviso tono="warn" icono={AlertCircle}>
+                La producción mensual por persona todavía no está conectada. En cuanto se
+                registre en planta, aparecerá aquí.
+              </Aviso>
 
               {/* Logs internos */}
               {logs.length > 0 && (
-                <div className="space-y-2 pt-4 border-t border-slate-100">
-                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Actividad de hoy</p>
-                  <div className="max-h-32 overflow-y-auto space-y-1">
+                <div className="space-y-2 pt-4 border-t border-line">
+                  <p className="text-xs font-semibold text-ink-muted uppercase tracking-wider">Actividad de hoy</p>
+                  <div className="custom-scrollbar max-h-32 space-y-1">
                     {logs.map((log) => (
-                      <div key={log.id} className="flex items-start gap-2 py-1 text-xs text-slate-600">
-                        <span className="font-mono text-slate-400 shrink-0">[{log.hora}]</span>
+                      <div key={log.id} className="flex items-start gap-2 py-1 text-xs text-ink-body">
+                        <span className="nums text-ink-muted shrink-0">[{log.hora}]</span>
                         <span>{log.mensaje}</span>
                       </div>
                     ))}
@@ -772,69 +864,62 @@ export default function EmpleadoPortalPage() {
           {activeTab === "permisos" && (
             <div className="space-y-5">
               <div className="flex items-center gap-2">
-                <FileText className="w-5 h-5 text-slate-600" strokeWidth={1.5} />
-                <h2 className="text-base font-bold text-slate-950 tracking-tight">Solicitudes Rápidas</h2>
+                <FileText className="w-5 h-5 text-ink-muted" strokeWidth={1.5} aria-hidden="true" />
+                <h2 className="text-base font-semibold text-ink">Solicitudes</h2>
               </div>
 
               {permisoExito && (
-                <div className="flex items-center gap-2.5 p-4 bg-emerald-50 border border-emerald-200/60 rounded-2xl">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" strokeWidth={1.5} />
-                  <p className="text-sm font-semibold text-emerald-800">¡Solicitud enviada a gerencia!</p>
-                </div>
+                <Aviso tono="ok" icono={CheckCircle2}>
+                  Solicitud enviada a gerencia.
+                </Aviso>
               )}
 
               <form onSubmit={handlePermisoSubmit} className="space-y-4">
-                <div className="space-y-1.5">
-                  <label htmlFor="permiso-tipo" className="block text-sm font-semibold text-slate-800">Tipo de Solicitud</label>
-                  <select
+                <FormField label="Tipo de solicitud" htmlFor="permiso-tipo">
+                  <SelectInput
                     id="permiso-tipo"
                     value={permisoTipo}
                     onChange={(e) => setPermisoTipo(e.target.value as TipoPermiso)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200/80 bg-white text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400/60 focus:border-transparent transition-all cursor-pointer"
                   >
                     <option>Permiso por Salud</option>
                     <option>Día Libre Con Goce</option>
                     <option>Incidencia de Taller</option>
-                  </select>
-                </div>
+                  </SelectInput>
+                </FormField>
 
-                <div className="space-y-1.5">
-                  <label htmlFor="permiso-fecha" className="block text-sm font-semibold text-slate-800">Fecha del Permiso</label>
-                  <input
+                <FormField label="Fecha del permiso" htmlFor="permiso-fecha">
+                  <TextInput
                     id="permiso-fecha"
                     type="date"
                     value={permisoFecha}
                     onChange={(e) => setPermisoFecha(e.target.value)}
                     required
                     min={hoyISO()}
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200/80 bg-white text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400/60 focus:border-transparent transition-all"
+                    numerico
                   />
-                </div>
+                </FormField>
 
-                <div className="space-y-1.5">
-                  <label htmlFor="permiso-justificacion" className="block text-sm font-semibold text-slate-800">Justificación</label>
-                  <textarea
+                <FormField label="Justificación" htmlFor="permiso-justificacion">
+                  <TextArea
                     id="permiso-justificacion"
                     rows={4}
                     value={permisoJustificacion}
                     onChange={(e) => setPermisoJustificacion(e.target.value)}
-                    placeholder="Describe el motivo..."
+                    placeholder="Describe el motivo…"
                     required
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200/80 bg-white text-slate-900 text-sm placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-slate-400/60 focus:border-transparent transition-all"
                   />
-                </div>
+                </FormField>
 
-                <button
+                <Button
                   type="submit"
-                  disabled={isSubmittingPermiso || !permisoFecha || !permisoJustificacion.trim()}
-                  className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-slate-900 text-white text-sm font-semibold hover:bg-slate-800 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  ancho
+                  tamano="lg"
+                  disabled={!permisoFecha || !permisoJustificacion.trim()}
+                  cargando={isSubmittingPermiso}
+                  iconLeft={<Send className="w-4 h-4" strokeWidth={2} />}
                 >
-                  {isSubmittingPermiso ? (
-                    <><Loader2 className="w-4 h-4 animate-spin" strokeWidth={1.5} /> Procesando…</>
-                  ) : (
-                    <><Send className="w-4 h-4" strokeWidth={1.5} /> Enviar Solicitud a Base de Datos</>
-                  )}
-                </button>
+                  {isSubmittingPermiso ? "Enviando…" : "Enviar solicitud"}
+                </Button>
               </form>
             </div>
           )}
@@ -844,7 +929,7 @@ export default function EmpleadoPortalPage() {
           ══════════════════════════════════ */}
           {activeTab === "entregas" && <TabEntregas />}
 
-        </div>
+        </Card>
       </main>
     </div>
   );
@@ -852,171 +937,32 @@ export default function EmpleadoPortalPage() {
 
 /* ─────────────────────────────────────────────
    TabEntregas
+
+   Esta pestaña traía tres entregas escritas a mano en el código
+   — clientes, direcciones, teléfonos y notas inventados — que se
+   le presentaban al colaborador como su ruta del día, y el botón
+   "Entregado" solo abría un alert("A futuro: ..."). Se retira el
+   contenido ficticio y queda el estado honesto.
+
+   Para conectarla de verdad: leer `envios` filtrando por
+   `colaboradores` array-contains el uid de la sesión y estado
+   distinto de "Entregado", y unir con `pedidos` → `clientes`
+   para la dirección y el teléfono, igual que hace
+   src/app/dashboard/entregas/page.tsx.
 ───────────────────────────────────────────── */
 function TabEntregas() {
-  const [expandedId, setExpandedId] = useState<string | null>(null);
-
-  const entregasPlanificadas = [
-    {
-      id: "ENV-001",
-      cliente: "María González",
-      comunidad: "Jocotenango, Sacatepéquez",
-      direccion: "3ra Calle Poniente #12, Barrio San Felipe",
-      telefono: "+502 5555-0101",
-      producto: "Ecocina",
-      estado: "Pendiente",
-      horaEstimada: "10:00 AM",
-      notas: "Cuidado con el perro. Dejar en la puerta principal.",
-    },
-    {
-      id: "ENV-002",
-      cliente: "Comité Comunitario San Juan",
-      comunidad: "San Juan del Obispo",
-      direccion: "Salón Comunal, frente a la plaza",
-      telefono: "+502 5555-0202",
-      producto: "EcoPlancha Superior",
-      estado: "En Ruta",
-      horaEstimada: "11:30 AM",
-      notas: "Llamar al presidente del comité 10 min antes de llegar.",
-    },
-    {
-      id: "ENV-003",
-      cliente: "Marta López",
-      comunidad: "Santiago Zamora",
-      direccion: "Lote 45, Callejón Los Pinos",
-      telefono: "+502 5555-0404",
-      producto: "Ecocomal",
-      estado: "Pendiente",
-      horaEstimada: "02:00 PM",
-      notas: "Camino de terracería. Subir despacio.",
-    },
-  ];
-
-  const toggleExpand = (id: string) => {
-    setExpandedId(expandedId === id ? null : id);
-  };
-
-  const badgeEstilos: Record<string, string> = {
-    Pendiente: "bg-amber-50 text-amber-700 ring-amber-200/60",
-    "En Ruta": "bg-blue-50 text-blue-700 ring-blue-200/60",
-    Completado: "bg-emerald-50 text-emerald-700 ring-emerald-200/60",
-  };
-
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Truck className="w-5 h-5 text-slate-600" strokeWidth={1.5} />
-          <h2 className="text-base font-bold text-slate-950 tracking-tight">Entregas de Hoy</h2>
-        </div>
+      <div className="flex items-center gap-2">
+        <Truck className="w-5 h-5 text-ink-muted" strokeWidth={1.5} aria-hidden="true" />
+        <h2 className="text-base font-semibold text-ink">Entregas de hoy</h2>
       </div>
 
-      <div className="grid grid-cols-1 gap-3">
-        {entregasPlanificadas.map((entrega) => {
-          const isExpanded = expandedId === entrega.id;
-
-          return (
-            <div
-              key={entrega.id}
-              className="bg-white rounded-2xl border border-slate-200/60 shadow-xs hover:border-slate-300 transition-all overflow-hidden"
-            >
-              {/* Header (Clickable para expandir) */}
-              <div
-                className="p-4 flex items-center justify-between cursor-pointer active:bg-slate-50"
-                onClick={() => toggleExpand(entrega.id)}
-              >
-                <div className="space-y-1 min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-bold text-slate-900 truncate">{entrega.cliente}</p>
-                    <span
-                      className={`inline-flex text-[10px] font-bold px-2 py-0.5 rounded-md ring-1 ${
-                        badgeEstilos[entrega.estado] || "bg-slate-100 text-slate-600 ring-slate-200/60"
-                      }`}
-                    >
-                      {entrega.estado}
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-500 truncate flex items-center gap-1">
-                    <MapPin className="w-3 h-3" />
-                    {entrega.comunidad}
-                  </p>
-                </div>
-                <div className="flex flex-col items-end gap-1 ml-3 shrink-0">
-                  <span className="text-xs font-semibold text-slate-700">{entrega.horaEstimada}</span>
-                  <ChevronRight
-                    className={`w-4 h-4 text-slate-400 transition-transform duration-300 ${
-                      isExpanded ? "rotate-90" : ""
-                    }`}
-                    strokeWidth={1.5}
-                  />
-                </div>
-              </div>
-
-              {/* Contenido Expandido */}
-              <div
-                className={`grid transition-all duration-300 ease-in-out ${
-                  isExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
-                }`}
-              >
-                <div className="overflow-hidden">
-                  <div className="p-4 pt-0 border-t border-slate-100 mt-2 space-y-4 bg-slate-50/50">
-                    
-                    <div className="grid grid-cols-1 gap-3 text-sm pt-4">
-                      <div className="flex items-start gap-2 text-slate-700">
-                        <MapPin className="w-4 h-4 mt-0.5 shrink-0 text-slate-400" />
-                        <div>
-                          <p className="font-semibold text-xs text-slate-500 uppercase tracking-wider mb-0.5">Dirección Exacta</p>
-                          <p>{entrega.direccion}</p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-start gap-2 text-slate-700">
-                        <Package className="w-4 h-4 mt-0.5 shrink-0 text-slate-400" />
-                        <div>
-                          <p className="font-semibold text-xs text-slate-500 uppercase tracking-wider mb-0.5">Producto a Entregar</p>
-                          <p className="font-medium">{entrega.producto}</p>
-                        </div>
-                      </div>
-
-                      {entrega.notas && (
-                        <div className="flex items-start gap-2 text-slate-700">
-                          <AlertCircle className="w-4 h-4 mt-0.5 shrink-0 text-amber-500" />
-                          <div>
-                            <p className="font-semibold text-xs text-slate-500 uppercase tracking-wider mb-0.5">Notas / Observaciones</p>
-                            <p className="text-xs">{entrega.notas}</p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex items-center gap-2 pt-2">
-                      <a
-                        href={`tel:${entrega.telefono.replace(/\s+/g, "")}`}
-                        className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-700 font-semibold text-sm hover:bg-slate-50 transition-all active:scale-95 shadow-sm"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <Phone className="w-4 h-4" />
-                        Llamar
-                      </a>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          alert("A futuro: abrir cámara para subir evidencia y marcar entregado.");
-                        }}
-                        className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-slate-900 text-white font-semibold text-sm hover:bg-slate-800 transition-all active:scale-95 shadow-sm"
-                      >
-                        <CheckCircle2 className="w-4 h-4" />
-                        Entregado
-                      </button>
-                    </div>
-
-                  </div>
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+      <EmptyState
+        icono={Inbox}
+        titulo="Tus entregas aún no están conectadas"
+        descripcion="Cuando el módulo de Ventas y Envíos asigne rutas a tu usuario, verás aquí el destino, el vehículo y los datos de contacto."
+      />
     </div>
   );
 }

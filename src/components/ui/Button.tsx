@@ -1,65 +1,43 @@
 "use client";
 
 import type { ButtonHTMLAttributes, ReactNode } from "react";
+import { Loader2 } from "lucide-react";
+import { cn } from "@/lib/cn";
 
-/* ─────────────────────────────────────────────
-   Variantes disponibles
-───────────────────────────────────────────── */
 type Variante = "primary" | "secondary" | "ghost" | "danger";
-type Tamano   = "sm" | "md" | "lg";
+type Tamano = "sm" | "md" | "lg";
 
-/* ─────────────────────────────────────────────
-   Mapa de estilos por variante
-───────────────────────────────────────────── */
+/**
+ * La acción primaria es grafito, no verde: el verde del sistema está
+ * reservado a los estados (ok / warn / risk), así que un botón verde
+ * leería como "correcto" en lugar de "acción".
+ */
 const VARIANTE_CLASES: Record<Variante, string> = {
-  primary: `
-    bg-slate-900 text-white
-    hover:bg-slate-800
-    ring-1 ring-white/10
-    shadow-sm
-    active:scale-[0.98]
-  `,
-  secondary: `
-    bg-white/80 text-slate-700
-    hover:bg-slate-100
-    ring-1 ring-slate-200/60
-    active:scale-[0.98]
-  `,
-  ghost: `
-    bg-transparent text-slate-600
-    hover:bg-slate-100 hover:text-slate-800
-    ring-1 ring-transparent hover:ring-slate-200/60
-    active:scale-[0.98]
-  `,
-  danger: `
-    bg-red-50 text-red-600
-    hover:bg-red-100
-    ring-1 ring-red-200/60
-    active:scale-[0.98]
-  `,
+  primary: "bg-action text-white hover:bg-action-hover shadow-card",
+  secondary: "bg-surface text-ink-body ring-1 ring-line hover:bg-sunken hover:ring-line-strong",
+  ghost: "text-ink-muted hover:bg-sunken hover:text-ink",
+  danger: "bg-risk-surface text-risk ring-1 ring-risk-line hover:bg-risk-line/40",
 };
 
-/* ─────────────────────────────────────────────
-   Mapa de tamaños
-───────────────────────────────────────────── */
+/**
+ * 44px de alto en celular — el taller se opera con el pulgar y guantes —
+ * que se compacta a 36px donde hay puntero.
+ */
 const TAMANO_CLASES: Record<Tamano, string> = {
-  sm: "px-3 py-1.5 text-xs",
-  md: "px-4 py-2   text-sm",
-  lg: "px-5 py-2.5 text-sm",
+  sm: "touch sm:min-h-8 px-3 text-xs gap-1.5",
+  md: "touch sm:min-h-9 px-4 text-sm gap-2",
+  lg: "touch sm:min-h-11 px-5 text-sm gap-2",
 };
 
-/* ─────────────────────────────────────────────
-   Componente Button
-───────────────────────────────────────────── */
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variante?: Variante;
   tamano?: Tamano;
-  /** Ícono a la izquierda del label */
   iconLeft?: ReactNode;
-  /** Ícono a la derecha del label */
   iconRight?: ReactNode;
-  /** Muestra un spinner de carga y deshabilita el botón */
+  /** Muestra el spinner, deshabilita y anuncia el estado a lectores. */
   cargando?: boolean;
+  /** Ocupa todo el ancho disponible. Útil en formularios de celular. */
+  ancho?: boolean;
   children: ReactNode;
 }
 
@@ -69,9 +47,11 @@ export function Button({
   iconLeft,
   iconRight,
   cargando = false,
+  ancho = false,
   children,
   className = "",
   disabled,
+  type = "button",
   ...rest
 }: ButtonProps) {
   const estaDeshabilitado = disabled || cargando;
@@ -79,50 +59,29 @@ export function Button({
   return (
     <button
       {...rest}
+      type={type}
       disabled={estaDeshabilitado}
-      aria-busy={cargando}
-      className={`
-        inline-flex items-center justify-center gap-2
-        font-medium rounded-xl
-        transition-all duration-150
-        disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100
-        ${VARIANTE_CLASES[variante]}
-        ${TAMANO_CLASES[tamano]}
-        ${className}
-      `}
+      aria-busy={cargando || undefined}
+      className={cn(
+        "inline-flex items-center justify-center rounded-control font-semibold",
+        "transition-[background-color,box-shadow,color] duration-150",
+        "active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100",
+        VARIANTE_CLASES[variante],
+        TAMANO_CLASES[tamano],
+        ancho && "w-full",
+        className,
+      )}
     >
       {cargando ? (
-        <svg
-          className="animate-spin w-4 h-4"
-          viewBox="0 0 24 24"
-          fill="none"
-          aria-hidden="true"
-        >
-          <circle
-            className="opacity-25"
-            cx="12" cy="12" r="10"
-            stroke="currentColor" strokeWidth="4"
-          />
-          <path
-            className="opacity-75"
-            fill="currentColor"
-            d="M4 12a8 8 0 018-8v8H4z"
-          />
-        </svg>
+        <Loader2 className="w-4 h-4 shrink-0 animate-spin" strokeWidth={2} aria-hidden="true" />
       ) : (
-        iconLeft && (
-          <span className="shrink-0" aria-hidden="true">
-            {iconLeft}
-          </span>
-        )
+        iconLeft && <span className="shrink-0" aria-hidden="true">{iconLeft}</span>
       )}
 
-      <span>{children}</span>
+      <span className="truncate">{children}</span>
 
       {!cargando && iconRight && (
-        <span className="shrink-0" aria-hidden="true">
-          {iconRight}
-        </span>
+        <span className="shrink-0" aria-hidden="true">{iconRight}</span>
       )}
     </button>
   );

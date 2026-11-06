@@ -1,56 +1,205 @@
 @import "tailwindcss";
-/* Inter se carga vía next/font/google en layout.tsx (ver src/app/layout.tsx) */
 
-/* ────────────────────────────────────────────
-   Tokens globales de Ecocomal v3
-──────────────────────────────────────────── */
-:root {
-  /* ── Marca Ecocomal (verde) ── */
-  --color-primary:        #16a34a;
-  --color-primary-dark:   #15803d;
-  --color-primary-light:  #bbf7d0;
-  --color-accent:         #0ea5e9;
-  --color-danger:         #dc2626;
-  --color-warning:        #d97706;
-  --color-bg:             #f8fafc;   /* slate-50 como fondo base Soft Corporate */
-  --color-surface:        #ffffff;
-  --color-text:           #1e293b;   /* slate-800 */
-  --color-muted:          #94a3b8;   /* slate-400 */
-  --radius-card:          1rem;
-  --shadow-card:          0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+/* ════════════════════════════════════════════════════════════
+   Ecocomal v3 — Sistema de diseño "Soft Corporate"
+   Gris frío (slate) como voz principal. El verde de marca es
+   acento de estado, nunca el color del cromo.
 
-  /* ── Soft Corporate — tokens refinados ── */
-  --sc-ring:              rgba(148,163,184,0.35);   /* ring-slate-300/35 */
-  --sc-ring-hover:        rgba(148,163,184,0.60);
-  --sc-shadow-inner:      rgba(248,250,252,0.40);
-  --sc-transition:        all 0.15s cubic-bezier(.4,0,.2,1);
+   Todo lo que está aquí se consume como utilidad de Tailwind:
+   bg-canvas, text-ink-muted, rounded-card, shadow-card…
+   Si un valor no vive en este archivo, no es del sistema.
+════════════════════════════════════════════════════════════ */
+
+@theme {
+  /* ── Superficies ───────────────────────────────────────── */
+  --color-canvas:         #f8fafc; /* fondo de página */
+  --color-surface:        #ffffff; /* tarjetas y paneles */
+  --color-sunken:         #f1f5f9; /* campos, pistas de tabs, celdas */
+
+  /* ── Líneas ────────────────────────────────────────────── */
+  --color-line:           #e2e8f0; /* separadores y anillos en reposo */
+  --color-line-strong:    #cbd5e1; /* anillo en hover y bordes de dato */
+
+  /* ── Texto. Mínimo 4.5:1 sobre blanco y sobre canvas. ──── */
+  --color-ink:            #0f172a; /* títulos — 17.4:1 */
+  --color-ink-body:       #1e293b; /* cuerpo — 13.6:1 */
+  --color-ink-muted:      #64748b; /* secundario — 4.8:1  (reemplaza slate-400) */
+  --color-ink-onDark:     #f8fafc;
+
+  /* ── Acción primaria: grafito, no verde. ───────────────── */
+  --color-action:         #0f172a;
+  --color-action-hover:   #1e293b;
+
+  /* ── Estados. El verde entra solo por aquí. ────────────── */
+  --color-ok:             #047857; /* emerald-700 — 5.3:1, apto para texto */
+  --color-ok-surface:     #ecfdf5;
+  --color-ok-line:        #a7f3d0;
+  --color-warn:           #b45309; /* amber-700 — 5.1:1 */
+  --color-warn-surface:   #fffbeb;
+  --color-warn-line:      #fde68a;
+  --color-risk:           #b91c1c; /* red-700 — 6.1:1 */
+  --color-risk-surface:   #fef2f2;
+  --color-risk-line:      #fecaca;
+  --color-info:           #1d4ed8; /* blue-700 — 6.3:1 */
+  --color-info-surface:   #eff6ff;
+  --color-info-line:      #bfdbfe;
+
+  /* ── Radios: tres pasos, no siete. ─────────────────────── */
+  --radius-control:       0.75rem; /* botones, campos, chips */
+  --radius-card:          1rem;    /* tarjetas y filas */
+  --radius-panel:         1.5rem;  /* contenedores de página */
+
+  /* ── Profundidad: desplazamiento + difuminado suave. ───── */
+  --shadow-card:    0 1px 2px rgb(15 23 42 / 0.04), 0 2px 8px rgb(15 23 42 / 0.04);
+  --shadow-raised:  0 2px 4px rgb(15 23 42 / 0.04), 0 8px 24px rgb(15 23 42 / 0.06);
+  --shadow-overlay: 0 8px 16px rgb(15 23 42 / 0.08), 0 24px 48px rgb(15 23 42 / 0.12);
+
+  /* ── Movimiento: salida exponencial, un solo gesto. ────── */
+  --ease-out-expo:  cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-standard:  cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ── Tipografía ────────────────────────────────────────── */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
+               "Segoe UI", Roboto, sans-serif;
 }
 
-/* ────────────────────────────────────────────
+/* ════════════════════════════════════════════════════════════
    Base
-──────────────────────────────────────────── */
-html { scroll-behavior: smooth; }
+════════════════════════════════════════════════════════════ */
 
 body {
-  background-color: var(--color-bg);
-  color:            var(--color-text);
-  font-family:      'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  min-height:       100vh;
+  background-color: var(--color-canvas);
+  color: var(--color-ink-body);
+  min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* El taller se usa con el pulgar: nada de rebote lateral. */
+  overscroll-behavior-y: none;
 }
 
-/* ────────────────────────────────────────────
-   Scrollbar personalizado
-──────────────────────────────────────────── */
-::-webkit-scrollbar        { width: 6px; height: 6px; }
-::-webkit-scrollbar-track  { background: transparent; }
-::-webkit-scrollbar-thumb  { background: #e2e8f0; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
+/* Los títulos llevan el tracking cerrado del sistema. */
+h1, h2, h3, h4 {
+  color: var(--color-ink);
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
 
-/* Utility: ocultar scrollbar pero mantener scroll (nav móvil) */
-.scrollbar-hide {
+/* ════════════════════════════════════════════════════════════
+   Superficies del navegador
+
+   Selección, caret, foco, scrollbar y numerales vienen con
+   valores por defecto que no pertenecen a ningún sistema de
+   diseño. Se visten desde la paleta.
+════════════════════════════════════════════════════════════ */
+
+::selection {
+  background-color: #cbd5e1;
+  color: var(--color-ink);
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-tap-highlight-color: transparent;
+}
+
+input, textarea, select, [contenteditable] {
+  caret-color: var(--color-action);
+}
+
+/* Un solo anillo de foco en toda la plataforma, visible sobre
+   superficie clara y sobre grafito. */
+:focus-visible {
+  outline: 2px solid var(--color-action);
+  outline-offset: 2px;
+  border-radius: var(--radius-control);
+}
+.on-dark :focus-visible,
+[data-on-dark] :focus-visible {
+  outline-color: #ffffff;
+}
+
+a {
+  text-underline-offset: 0.2em;
+  text-decoration-thickness: from-font;
+}
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--color-line-strong);
+  border-radius: 9999px;
+  /* El borde transparente adelgaza el pulgar sin perder área de arrastre. */
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover { background-color: #94a3b8; background-clip: content-box; }
+* { scrollbar-width: thin; scrollbar-color: var(--color-line-strong) transparent; }
+
+/* ════════════════════════════════════════════════════════════
+   Utilidades del sistema
+════════════════════════════════════════════════════════════ */
+
+/* Cifras de ancho fijo: stock, quetzales, horas, cantidades.
+   Sin esto las columnas numéricas bailan al actualizarse en vivo. */
+@utility nums {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* Objetivo táctil de 44px. Los controles la combinan con
+   `sm:min-h-9` para compactarse donde el puntero es preciso. */
+@utility touch {
+  min-height: 2.75rem;
+}
+
+/* Scroll interno de paneles (historiales, listas largas). */
+@utility custom-scrollbar {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* Oculta la barra pero conserva el scroll — tabs en celular. */
+@utility scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
 }
-.scrollbar-hide::-webkit-scrollbar { display: none; }
+
+/* Degradado de fondo de las tarjetas, en un solo lugar. */
+@utility surface-card {
+  background-image: linear-gradient(to bottom, #ffffff, color-mix(in oklab, var(--color-canvas) 55%, #ffffff));
+}
+
+/* ════════════════════════════════════════════════════════════
+   Movimiento
+
+   `animate-in` / `fade-in` venían de tailwindcss-animate, que no
+   está instalado: durante meses no animaron nada. Esta es la
+   entrada real del sistema, y es una sola.
+════════════════════════════════════════════════════════════ */
+
+@keyframes rise {
+  from { opacity: 0; transform: translate3d(0, 0.5rem, 0); }
+  to   { opacity: 1; transform: none; }
+}
+
+@utility animate-rise {
+  animation: rise 0.42s var(--ease-out-expo) both;
+}
+
+@keyframes pulse-soft {
+  50% { opacity: 0.45; }
+}
+
+@utility animate-skeleton {
+  animation: pulse-soft 1.6s var(--ease-standard) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

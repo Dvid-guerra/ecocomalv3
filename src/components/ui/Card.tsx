@@ -1,95 +1,92 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { cn } from "@/lib/cn";
 
-/* ─────────────────────────────────────────────
-   Card base: aplica todos los tokens Soft Corporate
-───────────────────────────────────────────── */
 interface CardProps {
   children: ReactNode;
   className?: string;
-  /** Si true, aplica hover/active micro-interacciones */
+  /** Eleva la tarjeta en hover. Solo para tarjetas que son enlaces o botones. */
   interactivo?: boolean;
-  /** ID único para accesibilidad y testing */
+  /** `panel` es el contenedor de nivel de página; `card` es la pieza interior. */
+  nivel?: "card" | "panel";
   id?: string;
 }
 
-export function Card({ children, className = "", interactivo = false, id }: CardProps) {
+export function Card({
+  children,
+  className = "",
+  interactivo = false,
+  nivel = "card",
+  id,
+}: CardProps) {
   return (
     <div
       id={id}
-      className={`
-        bg-gradient-to-b from-white to-slate-50/50
-        rounded-2xl
-        ring-1 ring-slate-200/60
-        shadow-xs shadow-inner shadow-slate-100/40
-        ${interactivo
-          ? "transition-all duration-200 hover:-translate-y-0.5 hover:ring-slate-300/80 hover:shadow-sm hover:from-white hover:to-white active:scale-[0.99] cursor-pointer"
-          : ""
-        }
-        ${className}
-      `}
+      className={cn(
+        "surface-card ring-1 ring-line shadow-card",
+        nivel === "panel" ? "rounded-panel" : "rounded-card",
+        interactivo &&
+          "transition-[box-shadow,transform,--tw-ring-color] duration-200 ease-out hover:-translate-y-0.5 hover:ring-line-strong hover:shadow-raised active:translate-y-0 cursor-pointer",
+        className,
+      )}
     >
       {children}
     </div>
   );
 }
 
-/* ─────────────────────────────────────────────
-   CardHeader: zona de encabezado con separador
-───────────────────────────────────────────── */
 interface CardHeaderProps {
   titulo: string;
   subtitulo?: string;
+  /** Ícono a la izquierda del título, al mismo peso que el resto del cromo. */
+  icono?: ReactNode;
   accion?: ReactNode;
 }
 
-export function CardHeader({ titulo, subtitulo, accion }: CardHeaderProps) {
+export function CardHeader({ titulo, subtitulo, icono, accion }: CardHeaderProps) {
   return (
-    <div className="flex items-start justify-between px-5 pt-5 pb-4 border-b border-slate-100/80">
-      <div>
-        <h2 className="text-sm font-semibold text-slate-800 tracking-tight">{titulo}</h2>
-        {subtitulo && (
-          <p className="text-xs text-slate-400 mt-0.5">{subtitulo}</p>
+    <div className="flex items-start justify-between gap-4 px-5 pt-5 pb-4 border-b border-line">
+      <div className="flex items-start gap-2.5 min-w-0">
+        {icono && (
+          <span className="text-ink-muted shrink-0 mt-px" aria-hidden="true">
+            {icono}
+          </span>
         )}
+        <div className="min-w-0">
+          <h2 className="text-sm font-semibold text-ink">{titulo}</h2>
+          {subtitulo && <p className="text-xs text-ink-muted mt-1">{subtitulo}</p>}
+        </div>
       </div>
-      {accion && <div className="shrink-0 ml-4">{accion}</div>}
+      {accion && <div className="shrink-0">{accion}</div>}
     </div>
   );
 }
 
-/* ─────────────────────────────────────────────
-   CardBody: zona de contenido con padding estándar
-───────────────────────────────────────────── */
-interface CardBodyProps {
+export function CardBody({
+  children,
+  className = "",
+}: {
   children: ReactNode;
   className?: string;
+}) {
+  return <div className={cn("px-5 py-4", className)}>{children}</div>;
 }
 
-export function CardBody({ children, className = "" }: CardBodyProps) {
-  return (
-    <div className={`px-5 py-4 ${className}`}>
-      {children}
-    </div>
-  );
-}
-
-/* ─────────────────────────────────────────────
-   CardFooter: zona de acciones inferior
-───────────────────────────────────────────── */
-interface CardFooterProps {
+export function CardFooter({
+  children,
+  className = "",
+}: {
   children: ReactNode;
   className?: string;
-}
-
-export function CardFooter({ children, className = "" }: CardFooterProps) {
+}) {
   return (
-    <div className={`
-      px-5 py-3
-      border-t border-slate-100/80
-      flex items-center justify-end gap-2
-      ${className}
-    `}>
+    <div
+      className={cn(
+        "px-5 py-3 border-t border-line flex items-center justify-end gap-2",
+        className,
+      )}
+    >
       {children}
     </div>
   );

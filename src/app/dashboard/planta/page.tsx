@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { 
@@ -17,7 +16,6 @@ import {
 } from "firebase/firestore";
 
 import {
-  ArrowLeft,
   Warehouse,
   TrendingUp,
   TrendingDown,
@@ -26,7 +24,6 @@ import {
   FileText,
   BarChart3,
   X,
-  Loader2,
   Plus,
   Minus,
   CheckCircle2,
@@ -63,6 +60,22 @@ import {
   registrarMovimientoStock,
   StockInsuficienteError,
 } from "@/features/inventory/services/stock";
+import {
+  PageHeader,
+  Card,
+  CardHeader,
+  KpiCard,
+  Button,
+  Badge,
+  Tabs,
+  FormField,
+  TextInput,
+  SelectInput,
+  EmptyState,
+  Aviso,
+  type Tono,
+} from "@/components/ui";
+import { cn } from "@/lib/cn";
 
 /* ═══════════════════════════════════════════════════════
    TIPOS Y CONSTANTES GLOBALES
@@ -86,24 +99,28 @@ const getSemanaId = (fecha?: Date): string => {
   return `${d.getFullYear()}-W${String(weekNum).padStart(2, "0")}`;
 };
 
-const AREA_META: Record<AreaPlanta, { icon: React.ElementType; color: string; bg: string; ring: string }> = {
-  "Herrería":      { icon: Wrench,         color: "text-amber-700",  bg: "bg-amber-50",   ring: "ring-amber-200" },
-  "Fundición":     { icon: Flame,          color: "text-red-700",    bg: "bg-red-50",     ring: "ring-red-200" },
-  "Carga":         { icon: Truck,          color: "text-blue-700",   bg: "bg-blue-50",    ring: "ring-blue-200" },
-  "Labores Extras":{ icon: MoreHorizontal, color: "text-purple-700", bg: "bg-purple-50",  ring: "ring-purple-200" },
+/**
+ * Las cuatro áreas se distinguen por su ícono, no por un color propio.
+ * Antes cada una traía su hue (ámbar, rojo, azul, morado) y en la grilla
+ * semanal competían con el rojo de "urgente", que sí significa algo.
+ */
+const AREA_META: Record<AreaPlanta, { icon: React.ElementType }> = {
+  "Herrería":       { icon: Wrench },
+  "Fundición":      { icon: Flame },
+  "Carga":          { icon: Truck },
+  "Labores Extras": { icon: MoreHorizontal },
 };
 
-const PRIORIDAD_COLORS: Record<Prioridad, string> = {
-  Alta: "bg-red-50 text-red-700 ring-1 ring-red-200/60",
-  Media: "bg-amber-50 text-amber-700 ring-1 ring-amber-200/60",
-  Baja: "bg-slate-100 text-slate-600 ring-1 ring-slate-200/60",
+const PRIORIDAD_TONO: Record<Prioridad, Tono> = {
+  Alta: "risk",
+  Media: "warn",
+  Baja: "neutral",
 };
 
 /* ═══════════════════════════════════════════════════════
    PÁGINA PRINCIPAL
 ═══════════════════════════════════════════════════════ */
 export default function PlantaPage() {
-  const router = useRouter();
   const { sesion } = useAuth();
 
   // ── ESTADO MAESTRO DE NAVEGACIÓN ──
@@ -331,74 +348,52 @@ export default function PlantaPage() {
     tareasGlobales.filter(t => t.empleadoId === empleadoSeleccionado && t.fecha === hoy()),
   [tareasGlobales, empleadoSeleccionado]);
 
-  // ── RENDER COMPONENTES ──
-  const inputCls = "w-full px-3 py-2.5 rounded-xl border border-slate-200/60 bg-white text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all";
-
+  // ── RENDER ──
+  /* El layout del dashboard ya aporta el fondo, el ancho máximo y el
+     padding vertical; este módulo los duplicaba. */
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-12 space-y-8">
+    <div className="space-y-8">
 
         {/* ── ENCABEZADO ── */}
-        <div>
-          <button
-            onClick={() => router.push("/dashboard")}
-            className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-900 transition-colors mb-4 group"
-          >
-            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" strokeWidth={1.5} />
-            Volver al Dashboard
-          </button>
-          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-            <div>
-              <h1 className="text-2xl font-bold text-slate-950 tracking-tight">Planta de Trabajo</h1>
-              <p className="text-sm text-slate-500 mt-0.5">Control de producción, stock, recetas y asignaciones</p>
-            </div>
-            
-            {/* TABS MAESTRAS */}
-            <div className="flex items-center gap-1 bg-slate-200/50 p-1 rounded-xl shrink-0">
-              <button
-                onClick={() => setMainTab("inventario")}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
-                  mainTab === "inventario" ? "bg-white text-slate-900 shadow-sm ring-1 ring-slate-200" : "text-slate-500 hover:text-slate-700"
-                }`}
-              >
-                <Package className="w-4 h-4" strokeWidth={2} />
-                Inventario
-              </button>
-              <button
-                onClick={() => setMainTab("ajustes")}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
-                  mainTab === "ajustes" ? "bg-white text-slate-900 shadow-sm ring-1 ring-slate-200" : "text-slate-500 hover:text-slate-700"
-                }`}
-              >
-                <Settings className="w-4 h-4" strokeWidth={2} />
-                Ajustes de Planta
-              </button>
-            </div>
-          </div>
-        </div>
+        <PageHeader
+          titulo="Planta de Trabajo"
+          descripcion="Control de producción, stock, recetas y asignaciones"
+          icono={Warehouse}
+          volverHref="/dashboard"
+          volverLabel="Volver al inicio"
+          acciones={
+            <Tabs
+              etiqueta="Vista de planta"
+              value={mainTab}
+              onChange={setMainTab}
+              items={[
+                { id: "inventario", label: "Inventario", icon: Package },
+                { id: "ajustes", label: "Ajustes de Planta", icon: Settings },
+              ] as const}
+            />
+          }
+        />
 
         {/* ══════════════════════════════════════════════════════════
             VISTA 1: INVENTARIO (ORIGINAL MIGRADA)
         ══════════════════════════════════════════════════════════ */}
         {mainTab === "inventario" && (
-          <div className="space-y-6 animate-in fade-in duration-300">
+          <div className="space-y-6 animate-rise">
             {/* KPIs */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {[
-                { label: "Total en Bodega", value: kpis.totalBodega, sub: "unidades disponibles", icon: Warehouse, color: "bg-slate-100 text-slate-700" },
-                { label: "Entradas de Hoy", value: kpis.entradasHoy, sub: "unidades ingresadas", icon: TrendingUp, color: "bg-emerald-50 text-emerald-600" },
-                { label: "Despachos Hoy", value: kpis.salidasHoy, sub: "unidades despachadas", icon: TrendingDown, color: "bg-blue-50 text-blue-600" },
-              ].map(({ label, value, sub, icon: Icon, color }) => (
-                <div key={label} className="bg-gradient-to-b from-white to-slate-50/50 rounded-3xl ring-1 ring-slate-200/60 shadow-xs p-5 flex items-center gap-4">
-                  <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 ${color}`}>
-                    <Icon className="w-5 h-5" strokeWidth={1.5} />
-                  </div>
-                  <div>
-                    <p className="text-xs font-medium text-slate-500">{label}</p>
-                    <p className="text-2xl font-bold font-mono text-slate-950">{value}</p>
-                    <p className="text-xs text-slate-400">{sub}</p>
-                  </div>
-                </div>
+                { id: "kpi-bodega",   label: "Total en Bodega", value: kpis.totalBodega, sub: "unidades disponibles", icon: Warehouse },
+                { id: "kpi-entradas", label: "Entradas de Hoy",  value: kpis.entradasHoy, sub: "unidades ingresadas",  icon: TrendingUp },
+                { id: "kpi-salidas",  label: "Despachos Hoy",    value: kpis.salidasHoy,  sub: "unidades despachadas", icon: TrendingDown },
+              ].map(({ id, label, value, sub, icon: Icon }) => (
+                <KpiCard
+                  key={id}
+                  id={id}
+                  titulo={label}
+                  valor={value}
+                  descripcion={sub}
+                  icono={Icon}
+                />
               ))}
             </div>
 
@@ -406,145 +401,213 @@ export default function PlantaPage() {
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-6">
               <div className="space-y-6">
                 {/* Tabla de stock */}
-                <div className="bg-gradient-to-b from-white to-slate-50/50 rounded-3xl ring-1 ring-slate-200/60 shadow-xs overflow-hidden">
-                  <div className="px-6 py-5 border-b border-slate-100 flex items-center gap-2">
-                    <Package className="w-4.5 h-4.5 text-slate-600" strokeWidth={1.5} />
-                    <h2 className="text-sm font-semibold text-slate-800 tracking-tight">Stock Actual en Bodega</h2>
-                  </div>
-                  <div className="divide-y divide-slate-100/80">
+                <Card nivel="panel" className="overflow-hidden">
+                  <CardHeader
+                    titulo="Stock Actual en Bodega"
+                    icono={<Package className="w-4 h-4" strokeWidth={1.5} />}
+                  />
+                  <div className="divide-y divide-line">
                     {stock.map((item) => {
                       const bajo = item.cantidad < STOCK_MINIMO;
                       const pct = Math.min(100, Math.round((item.cantidad / STOCK_MAX_REF) * 100));
                       return (
-                        <div key={item.modelo} className="flex items-center gap-5 px-6 py-4">
+                        <div key={item.modelo} className="flex items-center gap-5 px-5 py-4">
                           <div className="flex-1 min-w-0 space-y-2">
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm font-medium text-slate-800">{item.modelo}</span>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-sm font-semibold text-ink">{item.modelo}</span>
                               {bajo && (
-                                <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 ring-1 ring-amber-200/60 shrink-0">
-                                  <AlertTriangle className="w-3 h-3" strokeWidth={1.5} />
-                                  Bajo Stock
-                                </span>
+                                <Badge
+                                  tono="warn"
+                                  icono={<AlertTriangle className="w-3 h-3" strokeWidth={2} />}
+                                >
+                                  Bajo stock
+                                </Badge>
                               )}
                             </div>
-                            <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                              <div className={`h-full rounded-full transition-all duration-500 ${bajo ? "bg-amber-400" : "bg-emerald-500"}`} style={{ width: `${pct}%` }} />
+                            <div
+                              className="h-1.5 bg-line rounded-full overflow-hidden"
+                              role="progressbar"
+                              aria-valuenow={item.cantidad}
+                              aria-valuemin={0}
+                              aria-valuemax={STOCK_MAX_REF}
+                              aria-label={`Existencias de ${item.modelo}`}
+                            >
+                              <div
+                                className={cn(
+                                  "h-full rounded-full transition-[width] duration-500 ease-out",
+                                  bajo ? "bg-warn" : "bg-ok",
+                                )}
+                                style={{ width: `${pct}%` }}
+                              />
                             </div>
                           </div>
                           <div className="text-right shrink-0">
-                            <span className={`text-2xl font-bold font-mono ${bajo ? "text-amber-600" : "text-slate-950"}`}>{item.cantidad}</span>
-                            <p className="text-xs text-slate-400">uds.</p>
+                            <span className={cn("nums text-2xl font-bold", bajo ? "text-warn" : "text-ink")}>
+                              {item.cantidad}
+                            </span>
+                            <p className="text-xs text-ink-muted">uds.</p>
                           </div>
                         </div>
                       );
                     })}
                   </div>
-                </div>
+                </Card>
 
                 {/* Historial con pestañas */}
-                <div className="bg-gradient-to-b from-white to-slate-50/50 rounded-3xl ring-1 ring-slate-200/60 shadow-xs overflow-hidden">
-                  <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-2">
-                      <FileText className="w-4.5 h-4.5 text-slate-600" strokeWidth={1.5} />
-                      <h2 className="text-sm font-semibold text-slate-800 tracking-tight">Historial de Movimientos</h2>
-                    </div>
-                    <div className="flex items-center gap-1 bg-slate-100/60 rounded-xl p-1">
-                      {(["entradas", "salidas"] as const).map((t) => (
-                        <button
-                          key={t}
-                          onClick={() => setInvTab(t)}
-                          className={`text-xs font-medium px-3 py-1.5 rounded-lg capitalize transition-all duration-200 ${invTab === t ? "bg-white text-slate-900 ring-1 ring-slate-200/60 shadow-xs" : "text-slate-500 hover:text-slate-700"}`}
-                        >
-                          {t}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="divide-y divide-slate-100/80 max-h-72 overflow-y-auto">
+                <Card nivel="panel" className="overflow-hidden">
+                  <CardHeader
+                    titulo="Historial de Movimientos"
+                    icono={<FileText className="w-4 h-4" strokeWidth={1.5} />}
+                    accion={
+                      <Tabs
+                        etiqueta="Tipo de movimiento"
+                        value={invTab}
+                        onChange={setInvTab}
+                        items={[
+                          { id: "entradas", label: "Entradas" },
+                          { id: "salidas", label: "Salidas" },
+                        ] as const}
+                      />
+                    }
+                  />
+                  <div className="custom-scrollbar divide-y divide-line max-h-72">
                     {historial.length === 0 ? (
-                      <div className="py-10 text-center text-sm text-slate-400">Sin registros en esta categoría.</div>
+                      <EmptyState
+                        icono={FileText}
+                        titulo={invTab === "entradas" ? "Sin entradas registradas" : "Sin salidas registradas"}
+                        descripcion="Los movimientos que registres en el formulario aparecen aquí al instante."
+                      />
                     ) : (
-                      historial.map((m) => (
-                        <div key={m.id} className="flex items-start gap-3 px-6 py-3.5 hover:bg-slate-50/60 transition-colors">
-                          <div className={`mt-0.5 w-7 h-7 rounded-xl flex items-center justify-center shrink-0 ${m.tipo === "entrada" ? "bg-emerald-50" : "bg-blue-50"}`}>
-                            {m.tipo === "entrada" ? <Plus className="w-3.5 h-3.5 text-emerald-600" strokeWidth={2} /> : <Minus className="w-3.5 h-3.5 text-blue-600" strokeWidth={2} />}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-baseline gap-1.5">
-                              <span className="text-sm font-medium text-slate-800">{m.modelo}</span>
-                              <span className={`text-xs font-mono font-bold ${m.tipo === "entrada" ? "text-emerald-600" : "text-blue-600"}`}>{m.tipo === "entrada" ? "+" : "-"}{m.cantidad}</span>
+                      historial.map((m) => {
+                        const esEntrada = m.tipo === "entrada";
+                        return (
+                          <div key={m.id} className="flex items-start gap-3 px-5 py-3.5 hover:bg-sunken transition-colors">
+                            <span
+                              className={cn(
+                                "mt-0.5 w-7 h-7 rounded-control flex items-center justify-center shrink-0 ring-1",
+                                esEntrada
+                                  ? "bg-ok-surface text-ok ring-ok-line"
+                                  : "bg-info-surface text-info ring-info-line",
+                              )}
+                              aria-hidden="true"
+                            >
+                              {esEntrada ? <Plus className="w-3.5 h-3.5" strokeWidth={2} /> : <Minus className="w-3.5 h-3.5" strokeWidth={2} />}
+                            </span>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-baseline gap-1.5">
+                                <span className="text-sm font-semibold text-ink">{m.modelo}</span>
+                                <span className={cn("nums text-xs font-bold", esEntrada ? "text-ok" : "text-info")}>
+                                  {esEntrada ? "+" : "−"}{m.cantidad}
+                                </span>
+                              </div>
+                              <p className="text-xs text-ink-muted truncate mt-0.5">{m.observaciones}</p>
                             </div>
-                            <p className="text-xs text-slate-500 truncate mt-0.5">{m.observaciones}</p>
+                            <div className="text-right shrink-0">
+                              <p className="nums text-xs font-medium text-ink-body">{m.hora}</p>
+                              <p className="nums text-xs text-ink-muted">{m.fecha}</p>
+                            </div>
                           </div>
-                          <div className="text-right shrink-0">
-                            <p className="text-xs font-mono text-slate-500">{m.hora}</p>
-                            <p className="text-xs text-slate-400">{m.fecha}</p>
-                          </div>
-                        </div>
-                      ))
+                        );
+                      })
                     )}
                   </div>
-                </div>
+                </Card>
               </div>
 
               {/* Formulario Inventario */}
-              <div className="bg-gradient-to-b from-white to-slate-50/50 rounded-3xl ring-1 ring-slate-200/60 shadow-xs overflow-hidden h-fit">
-                <div className="px-6 py-5 border-b border-slate-100">
-                  <div className="flex items-center gap-2">
-                    <BarChart3 className="w-4.5 h-4.5 text-slate-600" strokeWidth={1.5} />
-                    <h2 className="text-sm font-semibold text-slate-800 tracking-tight">Registrar Movimiento</h2>
-                  </div>
-                  <p className="text-xs text-slate-400 mt-0.5">Entrada de producción o salida a campo</p>
-                </div>
-                <form onSubmit={handleInvSubmit} className="px-6 py-5 space-y-4">
-                  <div className="space-y-1.5">
-                    <label className="block text-xs font-semibold text-slate-700">Modelo de Estufa</label>
-                    <select value={formInv.modelo} onChange={(e) => setFormInv((p) => ({ ...p, modelo: e.target.value as Modelo }))} className={inputCls}>
+              <Card nivel="panel" className="overflow-hidden h-fit lg:sticky lg:top-20">
+                <CardHeader
+                  titulo="Registrar Movimiento"
+                  subtitulo="Entrada de producción o salida a campo"
+                  icono={<BarChart3 className="w-4 h-4" strokeWidth={1.5} />}
+                />
+                <form onSubmit={handleInvSubmit} className="px-5 py-5 space-y-4">
+                  <FormField label="Modelo de estufa" htmlFor="inv-modelo">
+                    <SelectInput
+                      id="inv-modelo"
+                      value={formInv.modelo}
+                      onChange={(e) => setFormInv((p) => ({ ...p, modelo: e.target.value as Modelo }))}
+                    >
                       {MODELOS.map((m) => <option key={m} value={m}>{m}</option>)}
-                    </select>
-                  </div>
-                  <div className="space-y-1.5">
-                    <span className="block text-xs font-semibold text-slate-700">Tipo de Movimiento</span>
+                    </SelectInput>
+                  </FormField>
+
+                  <fieldset className="space-y-1.5">
+                    <legend className="text-xs font-semibold text-ink-body mb-1.5">Tipo de movimiento</legend>
                     <div className="grid grid-cols-2 gap-2">
-                      {(["entrada", "salida"] as const).map((t) => (
-                        <button
-                          key={t}
-                          type="button"
-                          onClick={() => setFormInv((p) => ({ ...p, tipo: t }))}
-                          className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border text-sm font-medium transition-all duration-200 ${
-                            formInv.tipo === t
-                              ? t === "entrada"
-                                ? "bg-emerald-50 border-emerald-300 text-emerald-800 ring-1 ring-emerald-200/60"
-                                : "bg-blue-50 border-blue-300 text-blue-800 ring-1 ring-blue-200/60"
-                              : "bg-white border-slate-200/60 text-slate-500 hover:border-slate-300"
-                          }`}
-                        >
-                          {t === "entrada" ? <Plus className="w-4 h-4" strokeWidth={2} /> : <Minus className="w-4 h-4" strokeWidth={2} />}
-                          {t === "entrada" ? "Entrada" : "Salida"}
-                        </button>
-                      ))}
+                      {(["entrada", "salida"] as const).map((t) => {
+                        const activo = formInv.tipo === t;
+                        const esEntrada = t === "entrada";
+                        return (
+                          <button
+                            key={t}
+                            type="button"
+                            aria-pressed={activo}
+                            onClick={() => setFormInv((p) => ({ ...p, tipo: t }))}
+                            className={cn(
+                              "touch flex items-center justify-center gap-2 px-3 rounded-control",
+                              "text-sm font-semibold ring-1 transition-[background-color,color,box-shadow] duration-150 active:scale-[0.98]",
+                              activo
+                                ? esEntrada
+                                  ? "bg-ok-surface text-ok ring-ok-line"
+                                  : "bg-info-surface text-info ring-info-line"
+                                : "bg-surface text-ink-muted ring-line hover:ring-line-strong hover:text-ink",
+                            )}
+                          >
+                            {esEntrada ? <Plus className="w-4 h-4" strokeWidth={2} /> : <Minus className="w-4 h-4" strokeWidth={2} />}
+                            {esEntrada ? "Entrada" : "Salida"}
+                          </button>
+                        );
+                      })}
                     </div>
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="block text-xs font-semibold text-slate-700">Cantidad</label>
-                    <input type="number" min={1} max={999} value={formInv.cantidad} onChange={(e) => setFormInv((p) => ({ ...p, cantidad: Math.max(1, parseInt(e.target.value) || 1) }))} className={`${inputCls} font-mono`} />
-                    {formInv.tipo === "salida" && (
-                      <p className="text-xs text-slate-400">
-                        Disponible: <span className="font-mono font-semibold text-slate-700">{stock.find((s) => s.modelo === formInv.modelo)?.cantidad ?? 0}</span> uds.
-                      </p>
-                    )}
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="block text-xs font-semibold text-slate-700">Observaciones</label>
-                    <input type="text" placeholder="Ej: Despacho o Ingreso..." value={formInv.observaciones} onChange={(e) => setFormInv((p) => ({ ...p, observaciones: e.target.value }))} className={`${inputCls} placeholder:text-slate-400`} />
-                  </div>
-                  {errorInv && <div className="flex items-center gap-2 bg-red-50 border border-red-200/60 rounded-xl px-4 py-3"><AlertTriangle className="w-4 h-4 text-red-500" strokeWidth={1.5} /><p className="text-xs text-red-700">{errorInv}</p></div>}
-                  {exitoInv && <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200/60 rounded-xl px-4 py-3"><CheckCircle2 className="w-4 h-4 text-emerald-600" strokeWidth={1.5} /><p className="text-xs text-emerald-700 font-medium">Movimiento registrado.</p></div>}
-                  <button type="submit" className="w-full bg-slate-900 text-white rounded-xl hover:bg-slate-800 transition-all text-sm font-medium px-4 py-2.5 flex items-center justify-center gap-2 active:scale-[0.98]">
-                    {formInv.tipo === "entrada" ? <><Plus className="w-4 h-4" strokeWidth={2} /> Registrar Entrada</> : <><Minus className="w-4 h-4" strokeWidth={2} /> Registrar Salida</>}
-                  </button>
+                  </fieldset>
+
+                  <FormField
+                    label="Cantidad"
+                    htmlFor="inv-cantidad"
+                    pista={
+                      formInv.tipo === "salida"
+                        ? `Disponible: ${stock.find((s) => s.modelo === formInv.modelo)?.cantidad ?? 0} uds.`
+                        : undefined
+                    }
+                  >
+                    <TextInput
+                      id="inv-cantidad"
+                      type="number"
+                      inputMode="numeric"
+                      min={1}
+                      max={999}
+                      numerico
+                      value={formInv.cantidad}
+                      onChange={(e) => setFormInv((p) => ({ ...p, cantidad: Math.max(1, parseInt(e.target.value) || 1) }))}
+                    />
+                  </FormField>
+
+                  <FormField label="Observaciones" htmlFor="inv-observaciones">
+                    <TextInput
+                      id="inv-observaciones"
+                      type="text"
+                      placeholder="Ej: Despacho a Sololá"
+                      value={formInv.observaciones}
+                      onChange={(e) => setFormInv((p) => ({ ...p, observaciones: e.target.value }))}
+                    />
+                  </FormField>
+
+                  {errorInv && <Aviso tono="risk" icono={AlertTriangle}>{errorInv}</Aviso>}
+                  {exitoInv && <Aviso tono="ok" icono={CheckCircle2}>Movimiento registrado.</Aviso>}
+
+                  <Button
+                    type="submit"
+                    ancho
+                    tamano="lg"
+                    iconLeft={formInv.tipo === "entrada"
+                      ? <Plus className="w-4 h-4" strokeWidth={2} />
+                      : <Minus className="w-4 h-4" strokeWidth={2} />}
+                  >
+                    {formInv.tipo === "entrada" ? "Registrar entrada" : "Registrar salida"}
+                  </Button>
                 </form>
-              </div>
+              </Card>
             </div>
           </div>
         )}
@@ -553,29 +616,19 @@ export default function PlantaPage() {
             VISTA 2: AJUSTES DE PLANTA (FIREBASE REAL)
         ══════════════════════════════════════════════════════════ */}
         {mainTab === "ajustes" && (
-          <div className="space-y-6 animate-in fade-in duration-300">
-            
+          <div className="space-y-6 animate-rise">
+
             {/* SUB-TABS AJUSTES */}
-            <div className="border-b border-slate-200/80">
-              <nav className="flex items-center gap-6 overflow-x-auto">
-                {([
-                  { id: "recetas",       label: "Gestión de Recetas (BOM)",       icon: Layers },
-                  { id: "tareas",        label: "Asignación de Tareas (Hoy)",     icon: ListTodo },
-                  { id: "planificacion", label: "Planificación Semanal",           icon: BarChart3 },
-                ] as const).map(({ id, label, icon: Icon }) => (
-                  <button
-                    key={id}
-                    onClick={() => setAjustesTab(id)}
-                    className={`pb-3 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap flex items-center gap-2 ${
-                      ajustesTab === id ? "border-slate-900 text-slate-900" : "border-transparent text-slate-500 hover:text-slate-700"
-                    }`}
-                  >
-                    <Icon className="w-4 h-4 inline-block" strokeWidth={1.5} />
-                    {label}
-                  </button>
-                ))}
-              </nav>
-            </div>
+            <Tabs
+              etiqueta="Ajustes de planta"
+              value={ajustesTab}
+              onChange={setAjustesTab}
+              items={[
+                { id: "recetas",       label: "Recetas (BOM)",        icon: Layers },
+                { id: "tareas",        label: "Tareas de hoy",        icon: ListTodo },
+                { id: "planificacion", label: "Planificación semanal", icon: BarChart3 },
+              ] as const}
+            />
 
             {/* ── SUBVISTA: RECETAS ── */}
             {ajustesTab === "recetas" && <ResumenRecetas />}
@@ -587,32 +640,46 @@ export default function PlantaPage() {
                 {/* Col 1: Áreas */}
                 <div className="space-y-4">
                   <div>
-                    <h3 className="text-sm font-bold text-slate-900">1. Selecciona un Área</h3>
-                    <p className="text-xs text-slate-500 mt-0.5">Filtra a los empleados por su zona de trabajo.</p>
+                    <h3 className="text-sm font-semibold text-ink">1. Selecciona un área</h3>
+                    <p className="text-xs text-ink-muted mt-0.5">Filtra a los empleados por su zona de trabajo.</p>
                   </div>
                   <div className="space-y-2">
                     {(Object.keys(AREA_META) as AreaPlanta[]).map((nombre) => {
                       const meta = AREA_META[nombre];
+                      const activa = areaSeleccionada === nombre;
+                      const nEmp = colaboradores.filter(c => c.areaPlanta === nombre).length;
                       return (
                         <button
                           key={nombre}
+                          type="button"
+                          aria-pressed={activa}
                           onClick={() => {
                             setAreaSeleccionada(nombre);
                             setEmpleadoSeleccionado("");
                             setIsAsignando(false);
                           }}
-                          className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl border transition-all ${
-                            areaSeleccionada === nombre
-                              ? "bg-white border-slate-900 shadow-sm ring-1 ring-slate-900"
-                              : "bg-white border-slate-200/60 text-slate-600 hover:border-slate-300 hover:bg-slate-50"
-                          }`}
+                          className={cn(
+                            "w-full touch flex items-center gap-3 px-4 py-3 rounded-card ring-1 text-left",
+                            "transition-[background-color,box-shadow] duration-150",
+                            activa
+                              ? "bg-surface ring-action shadow-card"
+                              : "bg-surface ring-line hover:ring-line-strong hover:bg-sunken",
+                          )}
                         >
-                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${meta.bg} ${meta.color}`}>
+                          <span
+                            className={cn(
+                              "w-8 h-8 rounded-control flex items-center justify-center shrink-0 ring-1",
+                              activa ? "bg-action text-white ring-transparent" : "bg-sunken text-ink-muted ring-line",
+                            )}
+                            aria-hidden="true"
+                          >
                             <meta.icon className="w-4 h-4" strokeWidth={2} />
-                          </div>
-                          <span className="text-sm font-bold">{nombre}</span>
-                          <span className="ml-auto text-xs font-mono text-slate-400">
-                            {colaboradores.filter(c => c.areaPlanta === nombre).length} emp.
+                          </span>
+                          <span className={cn("text-sm font-semibold", activa ? "text-ink" : "text-ink-body")}>
+                            {nombre}
+                          </span>
+                          <span className="nums ml-auto text-xs font-medium text-ink-muted">
+                            {nEmp} emp.
                           </span>
                         </button>
                       );
@@ -623,152 +690,199 @@ export default function PlantaPage() {
                 {/* Col 2: Empleados */}
                 <div className="space-y-4">
                   <div>
-                    <h3 className="text-sm font-bold text-slate-900">2. Empleados del Área</h3>
-                    <p className="text-xs text-slate-500 mt-0.5">
+                    <h3 className="text-sm font-semibold text-ink">2. Empleados del área</h3>
+                    <p className="text-xs text-ink-muted mt-0.5">
                       {areaSeleccionada ? `Personal de ${areaSeleccionada}` : "Selecciona un área primero"}
                     </p>
                   </div>
                   {areaSeleccionada ? (
                     <div className="space-y-3">
                       <div className="space-y-2">
-                        {empleadosEnArea.map((emp) => (
-                          <div key={emp.uid} className="flex items-center gap-2">
-                            <button
-                              onClick={() => setEmpleadoSeleccionado(emp.uid)}
-                              className={`flex-1 flex items-center gap-3 px-4 py-3 rounded-2xl border transition-all ${
-                                empleadoSeleccionado === emp.uid
-                                  ? "bg-indigo-50 border-indigo-200 ring-1 ring-indigo-200"
-                                  : "bg-white border-slate-200/60 text-slate-700 hover:border-slate-300"
-                              }`}
-                            >
-                              <div className="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs font-bold shrink-0">
-                                {emp.nombre.charAt(0).toUpperCase()}
-                              </div>
-                              <div className="text-left">
-                                <p className="text-sm font-bold truncate max-w-[150px]">{emp.nombre}</p>
-                                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">{emp.areaPlanta}</p>
-                              </div>
-                            </button>
-                            <button
-                              onClick={() => handleDesvincular(emp.uid)}
-                              title="Desvincular del Área"
-                              className="p-3 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-2xl border border-transparent hover:border-red-200 transition-colors"
-                            >
-                              <Minus className="w-4 h-4" strokeWidth={2} />
-                            </button>
-                          </div>
-                        ))}
+                        {empleadosEnArea.map((emp) => {
+                          const activo = empleadoSeleccionado === emp.uid;
+                          return (
+                            <div key={emp.uid} className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                aria-pressed={activo}
+                                onClick={() => setEmpleadoSeleccionado(emp.uid)}
+                                className={cn(
+                                  "flex-1 min-w-0 touch flex items-center gap-3 px-4 py-3 rounded-card ring-1 text-left",
+                                  "transition-[background-color,box-shadow] duration-150",
+                                  activo
+                                    ? "bg-surface ring-action shadow-card"
+                                    : "bg-surface ring-line hover:ring-line-strong hover:bg-sunken",
+                                )}
+                              >
+                                <span
+                                  className="w-8 h-8 rounded-full bg-action text-white flex items-center justify-center text-xs font-bold shrink-0"
+                                  aria-hidden="true"
+                                >
+                                  {emp.nombre.charAt(0).toUpperCase()}
+                                </span>
+                                <span className="min-w-0">
+                                  <span className="block text-sm font-semibold text-ink truncate">{emp.nombre}</span>
+                                  <span className="block text-xs text-ink-muted truncate">{emp.areaPlanta}</span>
+                                </span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDesvincular(emp.uid)}
+                                aria-label={`Desvincular a ${emp.nombre} del área`}
+                                className="touch w-11 shrink-0 flex items-center justify-center text-ink-muted hover:text-risk hover:bg-risk-surface rounded-card transition-colors"
+                              >
+                                <Minus className="w-4 h-4" strokeWidth={2} aria-hidden="true" />
+                              </button>
+                            </div>
+                          );
+                        })}
                         {empleadosEnArea.length === 0 && !isAsignando && (
-                          <div className="p-6 text-center rounded-2xl border border-dashed border-slate-300 bg-slate-50/50">
-                            <Users className="w-6 h-6 text-slate-300 mx-auto mb-2" />
-                            <p className="text-xs font-medium text-slate-500">Nadie asignado a esta área.</p>
-                          </div>
+                          <Card>
+                            <EmptyState
+                              icono={Users}
+                              titulo="Nadie asignado a esta área"
+                              descripcion="Asigna colaboradores para poder darles tareas del día."
+                            />
+                          </Card>
                         )}
                       </div>
                       {!isAsignando ? (
-                        <button
+                        <Button
+                          variante="secondary"
+                          ancho
+                          tamano="lg"
                           onClick={() => setIsAsignando(true)}
-                          className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border border-dashed border-indigo-300 text-indigo-600 text-sm font-semibold hover:bg-indigo-50 transition-colors"
+                          iconLeft={<UserPlus className="w-4 h-4" strokeWidth={2} />}
                         >
-                          <UserPlus className="w-4 h-4" strokeWidth={2} />
-                          + Asignar Colaborador
-                        </button>
+                          Asignar colaborador
+                        </Button>
                       ) : (
-                        <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-3xl space-y-3">
-                          <h4 className="text-xs font-bold text-indigo-900">Selecciona personal disponible:</h4>
-                          <div className="max-h-48 overflow-y-auto space-y-1.5 pr-1">
+                        <Card className="p-4 space-y-3">
+                          <h4 className="text-xs font-semibold text-ink">Personal disponible</h4>
+                          <div className="custom-scrollbar max-h-48 space-y-1.5 pr-1">
                             {colaboradores.filter(c => c.areaPlanta !== areaSeleccionada).map(c => (
                               <button
                                 key={c.uid}
+                                type="button"
                                 onClick={() => handleAsignarArea(c.uid, areaSeleccionada)}
-                                className="w-full text-left bg-white px-3 py-2 rounded-xl text-sm font-semibold text-slate-700 hover:bg-indigo-600 hover:text-white transition-colors flex justify-between items-center group"
+                                className="w-full touch text-left bg-surface ring-1 ring-line px-3 rounded-control text-sm font-semibold text-ink-body hover:ring-action hover:bg-sunken transition-[background-color,box-shadow] flex justify-between items-center gap-2"
                               >
-                                <span>{c.nombre}</span>
-                                <span className="text-[10px] bg-slate-100 text-slate-500 group-hover:bg-indigo-500 group-hover:text-white px-2 py-0.5 rounded-md">
-                                  {c.areaPlanta || "Sin área"}
-                                </span>
+                                <span className="truncate">{c.nombre}</span>
+                                <Badge tono="neutral">{c.areaPlanta || "Sin área"}</Badge>
                               </button>
                             ))}
+                            {colaboradores.filter(c => c.areaPlanta !== areaSeleccionada).length === 0 && (
+                              <p className="text-xs text-ink-muted py-3 text-center">
+                                No hay más colaboradores por asignar.
+                              </p>
+                            )}
                           </div>
-                          <button onClick={() => setIsAsignando(false)} className="w-full text-xs font-bold text-slate-500 hover:text-slate-700 py-1">Cancelar</button>
-                        </div>
+                          <Button variante="ghost" ancho onClick={() => setIsAsignando(false)}>
+                            Cancelar
+                          </Button>
+                        </Card>
                       )}
                     </div>
                   ) : (
-                    <div className="h-40 rounded-3xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center text-slate-400">
-                      <ArrowLeft className="w-6 h-6 mb-2" strokeWidth={1.5} />
-                      <p className="text-xs font-medium">Elige un área a la izquierda</p>
-                    </div>
+                    <Card>
+                      <EmptyState
+                        icono={Wrench}
+                        titulo="Elige un área"
+                        descripcion="Selecciona Herrería, Fundición, Carga o Labores Extras para ver a su personal."
+                      />
+                    </Card>
                   )}
                 </div>
 
                 {/* Col 3: Tareas del Empleado */}
                 <div className="space-y-4">
                   <div>
-                    <h3 className="text-sm font-bold text-slate-900">3. Tareas Asignadas (Hoy)</h3>
-                    <p className="text-xs text-slate-500 mt-0.5">
+                    <h3 className="text-sm font-semibold text-ink">3. Tareas asignadas (hoy)</h3>
+                    <p className="text-xs text-ink-muted mt-0.5">
                       {empleadoSeleccionado
                         ? `Gestionando a ${colaboradores.find(e => e.uid === empleadoSeleccionado)?.nombre}`
                         : "Selecciona un empleado"}
                     </p>
                   </div>
                   {empleadoSeleccionado ? (
-                    <div className="bg-white rounded-3xl ring-1 ring-slate-200/80 shadow-xs overflow-hidden flex flex-col h-full min-h-[400px]">
-                      <div className="flex-1 p-4 space-y-3 overflow-y-auto bg-slate-50/30">
+                    <Card nivel="panel" className="overflow-hidden flex flex-col min-h-[25rem]">
+                      <div className="custom-scrollbar flex-1 p-4 space-y-3">
                         {tareasEmpleadoActual.length === 0 ? (
-                          <div className="text-center py-8">
-                            <CheckCircle2 className="w-8 h-8 text-emerald-200 mx-auto mb-2" strokeWidth={1.5} />
-                            <p className="text-sm font-semibold text-slate-500">Sin tareas pendientes hoy</p>
-                          </div>
+                          <EmptyState
+                            icono={CheckCircle2}
+                            titulo="Sin tareas pendientes hoy"
+                            descripcion="Crea una tarea abajo y aparecerá en el portal del colaborador al instante."
+                          />
                         ) : (
                           tareasEmpleadoActual.map(t => (
-                            <div key={t.id} className="bg-white p-3.5 rounded-2xl ring-1 ring-slate-200/60 flex items-start gap-3">
-                              <div className="flex-1 min-w-0 space-y-1">
-                                <p className={`text-sm font-medium ${t.completada ? "line-through text-slate-400" : "text-slate-800"}`}>{t.descripcion}</p>
-                                <span className={`inline-flex text-[10px] font-bold px-2 py-0.5 rounded-md ${PRIORIDAD_COLORS[t.prioridad]}`}>{t.prioridad}</span>
+                            <div key={t.id} className="bg-surface p-3.5 rounded-card ring-1 ring-line flex items-start gap-3">
+                              <div className="flex-1 min-w-0 space-y-1.5">
+                                <p className={cn(
+                                  "text-sm font-medium",
+                                  t.completada ? "line-through text-ink-muted" : "text-ink-body",
+                                )}>
+                                  {t.descripcion}
+                                </p>
+                                <Badge tono={PRIORIDAD_TONO[t.prioridad]}>{t.prioridad}</Badge>
                               </div>
-                              <button onClick={() => handleBorrarTarea(t.id)} className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
-                                <Trash2 className="w-4 h-4" strokeWidth={1.5} />
+                              <button
+                                type="button"
+                                onClick={() => handleBorrarTarea(t.id)}
+                                aria-label={`Borrar la tarea: ${t.descripcion}`}
+                                className="touch w-11 shrink-0 flex items-center justify-center text-ink-muted hover:text-risk hover:bg-risk-surface rounded-control transition-colors"
+                              >
+                                <Trash2 className="w-4 h-4" strokeWidth={1.5} aria-hidden="true" />
                               </button>
                             </div>
                           ))
                         )}
                       </div>
-                      <div className="p-4 bg-white border-t border-slate-100">
+                      <div className="p-4 border-t border-line">
                         <form onSubmit={handleCrearTarea} className="space-y-3">
-                          <input
-                            type="text"
-                            placeholder="Nueva tarea (ej. Soldar 10 bases)"
-                            value={formTarea.descripcion}
-                            onChange={(e) => setFormTarea(p => ({ ...p, descripcion: e.target.value }))}
-                            className="w-full text-sm px-3 py-2.5 bg-slate-50 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900"
-                          />
+                          <FormField label="Nueva tarea" htmlFor="tarea-descripcion">
+                            <TextInput
+                              id="tarea-descripcion"
+                              type="text"
+                              placeholder="Ej. Soldar 10 bases"
+                              value={formTarea.descripcion}
+                              onChange={(e) => setFormTarea(p => ({ ...p, descripcion: e.target.value }))}
+                            />
+                          </FormField>
                           <div className="flex gap-2">
-                            <select
+                            {/* El select traía emoji de colores como indicador de
+                                prioridad; el tono del Badge ya lo dice y usa el
+                                mismo sistema que el resto de la plataforma. */}
+                            <SelectInput
+                              id="tarea-prioridad"
+                              aria-label="Prioridad de la tarea"
                               value={formTarea.prioridad}
                               onChange={(e) => setFormTarea(p => ({ ...p, prioridad: e.target.value as Prioridad }))}
-                              className="w-1/3 text-xs font-semibold px-2 bg-slate-50 border border-slate-200/60 rounded-xl focus:outline-none"
+                              className="w-32 shrink-0"
                             >
-                              <option value="Alta">🔴 Alta</option>
-                              <option value="Media">🟡 Media</option>
-                              <option value="Baja">⚪ Baja</option>
-                            </select>
-                            <button
+                              <option value="Alta">Alta</option>
+                              <option value="Media">Media</option>
+                              <option value="Baja">Baja</option>
+                            </SelectInput>
+                            <Button
                               type="submit"
+                              className="flex-1"
                               disabled={!formTarea.descripcion.trim()}
-                              className="flex-1 bg-slate-900 text-white text-xs font-bold py-2.5 rounded-xl hover:bg-slate-800 disabled:opacity-50 transition-colors flex items-center justify-center gap-1.5"
+                              iconLeft={<Save className="w-4 h-4" strokeWidth={2} />}
                             >
-                              <Save className="w-3.5 h-3.5" strokeWidth={2} /> Crear
-                            </button>
+                              Crear
+                            </Button>
                           </div>
                         </form>
                       </div>
-                    </div>
+                    </Card>
                   ) : (
-                    <div className="h-40 rounded-3xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center text-slate-400">
-                      <ArrowLeft className="w-6 h-6 mb-2" strokeWidth={1.5} />
-                      <p className="text-xs font-medium">Elige un empleado para ver sus tareas</p>
-                    </div>
+                    <Card>
+                      <EmptyState
+                        icono={ListTodo}
+                        titulo="Elige un empleado"
+                        descripcion="Selecciona a alguien de la columna anterior para ver y asignar sus tareas de hoy."
+                      />
+                    </Card>
                   )}
                 </div>
               </div>
@@ -788,7 +902,6 @@ export default function PlantaPage() {
             )}
           </div>
         )}
-      </div>
     </div>
   );
 }
@@ -985,122 +1098,219 @@ function PlanificacionSemanal({
     }));
   };
 
-  const inputCls = "w-full text-sm px-3 py-2 bg-slate-50 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900";
-
   return (
     <div className="space-y-6">
       {/* Cabecera */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-base font-bold text-slate-900">Planificación Semanal (Industrial)</h2>
-          <p className="text-xs text-slate-500 mt-0.5">Asigna metas de producción de Lunes a Sábado. Jornada 48h.</p>
+          <h2 className="text-base font-semibold text-ink">Planificación semanal</h2>
+          <p className="text-xs text-ink-muted mt-0.5">Asigna metas de producción de lunes a sábado. Jornada de 48 h.</p>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="flex items-center bg-white ring-1 ring-slate-200/60 rounded-xl p-1 shadow-sm">
-            <button onClick={handleSemanaPrev} className="p-1.5 text-slate-400 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors"><ChevronLeft className="w-4 h-4" strokeWidth={2} /></button>
-            <div className="px-4 text-center min-w-[120px]">
-              <span className="text-xs font-bold text-slate-700 block">Semana {semanaActual.split("-W")[1]}</span>
-              <span className="text-[10px] text-slate-400 font-medium">{semanaActual.split("-W")[0]}</span>
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center bg-surface ring-1 ring-line rounded-control p-1 shadow-card">
+            <button
+              type="button"
+              onClick={handleSemanaPrev}
+              aria-label="Semana anterior"
+              className="touch w-11 sm:w-9 flex items-center justify-center text-ink-muted hover:text-ink hover:bg-sunken rounded-control transition-colors"
+            >
+              <ChevronLeft className="w-4 h-4" strokeWidth={2} aria-hidden="true" />
+            </button>
+            <div className="px-3 text-center min-w-28">
+              <span className="nums text-xs font-semibold text-ink block">
+                Semana {semanaActual.split("-W")[1]}
+              </span>
+              <span className="nums text-xs text-ink-muted">{semanaActual.split("-W")[0]}</span>
             </div>
-            <button onClick={handleSemanaNext} className="p-1.5 text-slate-400 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors"><ChevronRight className="w-4 h-4" strokeWidth={2} /></button>
+            <button
+              type="button"
+              onClick={handleSemanaNext}
+              aria-label="Semana siguiente"
+              className="touch w-11 sm:w-9 flex items-center justify-center text-ink-muted hover:text-ink hover:bg-sunken rounded-control transition-colors"
+            >
+              <ChevronRight className="w-4 h-4" strokeWidth={2} aria-hidden="true" />
+            </button>
           </div>
-          <button 
+          <Button
             onClick={() => setMostrarForm(!mostrarForm)}
-            className="flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-slate-800 transition-colors shadow-sm active:scale-[0.98]"
+            aria-expanded={mostrarForm}
+            iconLeft={<Plus className="w-4 h-4" strokeWidth={2.5} />}
           >
-            <Plus className="w-4 h-4" strokeWidth={2.5} /> Nuevo Bloque
-          </button>
+            Nuevo bloque
+          </Button>
         </div>
       </div>
 
       {/* Formulario */}
       {mostrarForm && (
-        <form onSubmit={handleGuardarBloque} className="bg-white ring-1 ring-slate-200/60 rounded-3xl p-6 shadow-xl shadow-slate-200/20 space-y-5 animate-in slide-in-from-top-4 duration-300">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <h3 className="text-sm font-bold text-slate-800">Crear Bloque de Producción</h3>
-            <button type="button" onClick={() => setMostrarForm(false)} className="text-slate-400 hover:text-slate-600"><X className="w-5 h-5" /></button>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider">Área</label>
-              <select value={formBloque.area || ""} onChange={e => {
-                 setFormBloque(p => ({ ...p, area: e.target.value as AreaPlanta, empleadoId: "" }));
-              }} className={inputCls} required>
-                <option value="">Seleccionar área</option>
-                {Object.keys(AREA_META).map(a => <option key={a} value={a}>{a}</option>)}
-              </select>
-            </div>
-            <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider">Colaborador</label>
-              <select value={formBloque.empleadoId || ""} onChange={e => setFormBloque(p => ({ ...p, empleadoId: e.target.value }))} className={inputCls} required disabled={!formBloque.area}>
-                <option value="">Seleccionar</option>
-                {colaboradores.filter(c => c.areaPlanta === formBloque.area).map(c => (
-                  <option key={c.uid} value={c.uid}>{c.nombre}</option>
-                ))}
-              </select>
-            </div>
-            <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider">Modelo</label>
-              <select value={formBloque.modelo || ""} onChange={e => setFormBloque(p => ({ ...p, modelo: e.target.value as Modelo }))} className={inputCls} required>
-                <option value="">Seleccionar</option>
-                {MODELOS.map(m => <option key={m} value={m}>{m}</option>)}
-              </select>
-            </div>
-            
-            <div className="space-y-1.5 flex flex-col justify-end">
-               <label className="flex items-center gap-2 cursor-pointer p-2 bg-red-50 ring-1 ring-red-200 rounded-xl hover:bg-red-100 transition-colors">
-                  <input type="checkbox" checked={formBloque.esUrgente || false} onChange={e => setFormBloque(p => ({ ...p, esUrgente: e.target.checked }))} className="w-4 h-4 text-red-600 rounded" />
-                  <span className="text-xs font-bold text-red-700">Extra / Urgente</span>
-               </label>
+        <Card nivel="panel" className="animate-rise">
+          <form onSubmit={handleGuardarBloque} className="p-5 sm:p-6 space-y-5">
+            <div className="flex items-center justify-between border-b border-line pb-3">
+              <h3 className="text-sm font-semibold text-ink">Crear bloque de producción</h3>
+              <button
+                type="button"
+                onClick={() => setMostrarForm(false)}
+                aria-label="Cerrar el formulario"
+                className="touch w-11 sm:w-9 flex items-center justify-center text-ink-muted hover:text-ink hover:bg-sunken rounded-control transition-colors"
+              >
+                <X className="w-5 h-5" aria-hidden="true" />
+              </button>
             </div>
 
-            <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider">Meta Total (Uds)</label>
-              <input type="number" min={1} required value={formBloque.unidadesObjetivo || ""} onChange={e => setFormBloque(p => ({ ...p, unidadesObjetivo: parseInt(e.target.value)||1 }))} className={inputCls} />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <FormField label="Área" htmlFor="bloque-area">
+                <SelectInput
+                  id="bloque-area"
+                  value={formBloque.area || ""}
+                  onChange={e => setFormBloque(p => ({ ...p, area: e.target.value as AreaPlanta, empleadoId: "" }))}
+                  required
+                >
+                  <option value="">Seleccionar área</option>
+                  {Object.keys(AREA_META).map(a => <option key={a} value={a}>{a}</option>)}
+                </SelectInput>
+              </FormField>
+
+              <FormField label="Colaborador" htmlFor="bloque-colaborador">
+                <SelectInput
+                  id="bloque-colaborador"
+                  value={formBloque.empleadoId || ""}
+                  onChange={e => setFormBloque(p => ({ ...p, empleadoId: e.target.value }))}
+                  required
+                  disabled={!formBloque.area}
+                >
+                  <option value="">Seleccionar</option>
+                  {colaboradores.filter(c => c.areaPlanta === formBloque.area).map(c => (
+                    <option key={c.uid} value={c.uid}>{c.nombre}</option>
+                  ))}
+                </SelectInput>
+              </FormField>
+
+              <FormField label="Modelo" htmlFor="bloque-modelo">
+                <SelectInput
+                  id="bloque-modelo"
+                  value={formBloque.modelo || ""}
+                  onChange={e => setFormBloque(p => ({ ...p, modelo: e.target.value as Modelo }))}
+                  required
+                >
+                  <option value="">Seleccionar</option>
+                  {MODELOS.map(m => <option key={m} value={m}>{m}</option>)}
+                </SelectInput>
+              </FormField>
+
+              <div className="flex flex-col justify-end">
+                <label
+                  htmlFor="bloque-urgente"
+                  className={cn(
+                    "touch flex items-center gap-2.5 cursor-pointer px-3 rounded-control ring-1 transition-colors",
+                    formBloque.esUrgente
+                      ? "bg-risk-surface ring-risk-line text-risk"
+                      : "bg-surface ring-line text-ink-body hover:ring-line-strong",
+                  )}
+                >
+                  <input
+                    id="bloque-urgente"
+                    type="checkbox"
+                    checked={formBloque.esUrgente || false}
+                    onChange={e => setFormBloque(p => ({ ...p, esUrgente: e.target.checked }))}
+                    className="w-4 h-4 rounded accent-[var(--color-risk)]"
+                  />
+                  <span className="text-xs font-semibold">Extra / urgente</span>
+                </label>
+              </div>
+
+              <FormField label="Meta total (uds)" htmlFor="bloque-meta">
+                <TextInput
+                  id="bloque-meta"
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  required
+                  numerico
+                  value={formBloque.unidadesObjetivo || ""}
+                  onChange={e => setFormBloque(p => ({ ...p, unidadesObjetivo: parseInt(e.target.value) || 1 }))}
+                />
+              </FormField>
+
+              <FormField label="Horas totales (est.)" htmlFor="bloque-horas">
+                <TextInput
+                  id="bloque-horas"
+                  type="number"
+                  inputMode="decimal"
+                  step="0.5"
+                  min={0.5}
+                  required
+                  numerico
+                  value={formBloque.horasEstimadas || ""}
+                  onChange={e => setFormBloque(p => ({ ...p, horasEstimadas: parseFloat(e.target.value) || 1 }))}
+                />
+              </FormField>
             </div>
-            <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider">Horas Totales (Est.)</label>
-              <input type="number" step="0.5" min={0.5} required value={formBloque.horasEstimadas || ""} onChange={e => setFormBloque(p => ({ ...p, horasEstimadas: parseFloat(e.target.value)||1 }))} className={inputCls} />
-            </div>
-          </div>
-          
-          <div className="space-y-3 pt-3 border-t border-slate-100">
-            <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider">Distribución Diaria (Lun - Sáb)</label>
-            <p className="text-[10px] text-slate-400">Asigna la cantidad de estufas a fabricar cada día. La suma debe dar {formBloque.unidadesObjetivo || 0}.</p>
-            <div className="grid grid-cols-6 gap-2">
-               {DIAS_SEMANA.map((dia) => (
-                  <div key={dia} className="space-y-1 text-center">
-                     <span className="text-xs font-bold text-slate-700">{dia}</span>
-                     <input 
-                        type="number" min={0}
-                        value={formBloque.distribucionDiaria?.[dia] || 0}
-                        onChange={e => setDist(dia, parseInt(e.target.value) || 0)}
-                        className={`${inputCls} text-center`}
-                     />
+
+            <div className="space-y-3 pt-3 border-t border-line">
+              <div>
+                <p className="text-xs font-semibold text-ink-body">Distribución diaria (lun – sáb)</p>
+                <p className="text-xs text-ink-muted mt-0.5">
+                  Asigna cuántas estufas se fabrican cada día. La suma debe dar {formBloque.unidadesObjetivo || 0}.
+                </p>
+              </div>
+              <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                {DIAS_SEMANA.map((dia) => (
+                  <div key={dia} className="space-y-1">
+                    <label htmlFor={`dist-${dia}`} className="block text-xs font-semibold text-ink-body text-center">
+                      {dia}
+                    </label>
+                    <TextInput
+                      id={`dist-${dia}`}
+                      type="number"
+                      inputMode="numeric"
+                      min={0}
+                      numerico
+                      value={formBloque.distribucionDiaria?.[dia] || 0}
+                      onChange={e => setDist(dia, parseInt(e.target.value) || 0)}
+                      className="text-center px-2"
+                    />
                   </div>
-               ))}
+                ))}
+              </div>
+              {/* Validación visual de la suma */}
+              {(() => {
+                const suma = DIAS_SEMANA.reduce((acc, d) => acc + (formBloque.distribucionDiaria?.[d] || 0), 0);
+                const cuadra = suma === formBloque.unidadesObjetivo;
+                return (
+                  <div className="flex justify-between items-center gap-3 bg-sunken ring-1 ring-line px-3 py-2 rounded-control text-xs font-semibold">
+                    <span className="text-ink-muted">Suma total distribuida</span>
+                    <Badge tono={cuadra ? "ok" : "risk"} numerico>
+                      {suma} / {formBloque.unidadesObjetivo || 0}
+                    </Badge>
+                  </div>
+                );
+              })()}
             </div>
-            {/* Validación visual de la suma */}
-            <div className="flex justify-between items-center bg-slate-50 p-2 rounded-lg text-xs font-semibold">
-               <span className="text-slate-500">Suma total distribuida:</span>
-               <span className={DIAS_SEMANA.reduce((acc, d) => acc + (formBloque.distribucionDiaria?.[d] || 0), 0) === formBloque.unidadesObjetivo ? "text-emerald-600" : "text-red-600"}>
-                  {DIAS_SEMANA.reduce((acc, d) => acc + (formBloque.distribucionDiaria?.[d] || 0), 0)} / {formBloque.unidadesObjetivo || 0}
-               </span>
-            </div>
-          </div>
 
-          <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider">Notas (opcional)</label>
-            <input type="text" placeholder="Instrucciones especiales..." value={formBloque.notas || ""} onChange={e => setFormBloque(p => ({ ...p, notas: e.target.value }))} className={inputCls} />
-          </div>
-          <div className="flex justify-end gap-3">
-            <button type="button" onClick={() => setMostrarForm(false)} className="px-4 py-2 text-sm font-semibold text-slate-500 hover:bg-slate-100 rounded-xl transition-colors">Cancelar</button>
-            <button type="submit" disabled={isSaving} className="px-5 py-2 bg-slate-900 text-white text-sm font-bold rounded-xl hover:bg-slate-800 transition-colors flex items-center gap-2 disabled:opacity-50">
-              {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" strokeWidth={2} />} Guardar Bloque
-            </button>
-          </div>
-        </form>
+            <FormField label="Notas (opcional)" htmlFor="bloque-notas">
+              <TextInput
+                id="bloque-notas"
+                type="text"
+                placeholder="Instrucciones especiales…"
+                value={formBloque.notas || ""}
+                onChange={e => setFormBloque(p => ({ ...p, notas: e.target.value }))}
+              />
+            </FormField>
+
+            <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
+              <Button variante="ghost" onClick={() => setMostrarForm(false)}>
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                cargando={isSaving}
+                iconLeft={<Save className="w-4 h-4" strokeWidth={2} />}
+              >
+                Guardar bloque
+              </Button>
+            </div>
+          </form>
+        </Card>
       )}
 
       {/* KPI de Capacidad por Área */}
@@ -1110,78 +1320,110 @@ function PlanificacionSemanal({
           const carga = cargaPorArea(area);
           const empCount = colaboradores.filter(c => c.areaPlanta === area).length;
           const bloquesArea = bloquesActuales.filter(b => b.area === area).length;
+          const tonoCarga: Tono = carga >= 100 ? "risk" : carga >= 70 ? "warn" : "ok";
+          const barraCarga = carga >= 100 ? "bg-risk" : carga >= 70 ? "bg-warn" : "bg-ok";
           return (
-            <div key={area} className="bg-white ring-1 ring-slate-200/60 rounded-2xl p-4 space-y-3">
-              <div className="flex items-center gap-2">
-                <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${meta.bg} ${meta.color}`}>
+            <Card key={area} className="p-4 space-y-3">
+              <div className="flex items-center gap-2.5">
+                <span
+                  className="w-8 h-8 shrink-0 rounded-control bg-sunken ring-1 ring-line text-ink-muted flex items-center justify-center"
+                  aria-hidden="true"
+                >
                   <meta.icon className="w-4 h-4" strokeWidth={2} />
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-slate-800">{area}</p>
-                  <p className="text-[10px] text-slate-400">{empCount} emp. · {bloquesArea} bloques</p>
+                </span>
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold text-ink truncate">{area}</p>
+                  <p className="nums text-xs text-ink-muted">{empCount} emp. · {bloquesArea} bloques</p>
                 </div>
               </div>
               <div>
-                <div className="flex items-end justify-between mb-1">
-                  <span className="text-[10px] font-medium text-slate-500">Carga Semanal (48h/emp)</span>
-                  <span className={`text-xs font-bold ${carga >= 100 ? "text-red-600" : carga >= 70 ? "text-amber-600" : "text-emerald-600"}`}>{carga}%</span>
+                <div className="flex items-end justify-between gap-2 mb-1.5">
+                  <span className="text-xs font-medium text-ink-muted">Carga semanal</span>
+                  <Badge tono={tonoCarga} numerico>{carga}%</Badge>
                 </div>
-                <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                  <div className={`h-full rounded-full transition-all duration-500 ${carga >= 100 ? "bg-red-500" : carga >= 70 ? "bg-amber-400" : "bg-emerald-500"}`} style={{ width: `${Math.min(carga, 100)}%` }} />
+                <div
+                  className="h-1.5 bg-line rounded-full overflow-hidden"
+                  role="progressbar"
+                  aria-valuenow={carga}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-label={`Carga semanal de ${area}, sobre 48 h por empleado`}
+                >
+                  <div
+                    className={cn("h-full rounded-full transition-[width] duration-500 ease-out", barraCarga)}
+                    style={{ width: `${Math.min(carga, 100)}%` }}
+                  />
                 </div>
               </div>
-            </div>
+            </Card>
           );
         })}
       </div>
 
       {/* Grilla Semanal */}
-      <div className="bg-white ring-1 ring-slate-200/60 rounded-3xl overflow-hidden shadow-sm">
-        <div className="px-6 py-4 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <BarChart3 className="w-4 h-4 text-slate-500" strokeWidth={1.5} />
-            <h3 className="text-sm font-bold text-slate-800">Calendario Semanal por Área (Distribución)</h3>
+      <Card nivel="panel" className="overflow-hidden">
+        <div className="px-5 py-4 border-b border-line flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-2.5">
+            <BarChart3 className="w-4 h-4 text-ink-muted shrink-0" strokeWidth={1.5} aria-hidden="true" />
+            <h3 className="text-sm font-semibold text-ink">Calendario semanal por área</h3>
           </div>
-          <div className="flex gap-1 md:gap-2">
+          <div className="hidden md:flex gap-2">
             {diasDeSemana.map((d, i) => (
-              <div key={i} className="text-center w-12 md:w-16">
-                <p className="text-xs font-bold text-slate-700">{DIAS_SEMANA[i]}</p>
-                <p className="text-[10px] text-slate-400 hidden md:block">{d.getDate()}/{d.getMonth() + 1}</p>
+              <div key={i} className="text-center w-16">
+                <p className="text-xs font-semibold text-ink-body">{DIAS_SEMANA[i]}</p>
+                <p className="nums text-xs text-ink-muted">{d.getDate()}/{d.getMonth() + 1}</p>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="divide-y divide-slate-100 overflow-x-auto">
+        <div className="divide-y divide-line overflow-x-auto">
           {(Object.keys(AREA_META) as AreaPlanta[]).map(area => {
             const meta = AREA_META[area];
             const bloquesArea = bloquesActuales.filter(b => b.area === area);
             return (
-              <div key={area} className="flex min-w-[600px]">
-                <div className={`w-32 shrink-0 flex items-center gap-2 px-3 py-4 border-r border-slate-100 ${meta.bg}`}>
-                  <meta.icon className={`w-4 h-4 shrink-0 ${meta.color}`} strokeWidth={2} />
-                  <span className={`text-xs font-bold ${meta.color} leading-tight`}>{area}</span>
+              <div key={area} className="flex min-w-[37.5rem]">
+                <div className="w-32 shrink-0 flex items-center gap-2 px-3 py-4 border-r border-line bg-sunken">
+                  <meta.icon className="w-4 h-4 shrink-0 text-ink-muted" strokeWidth={2} aria-hidden="true" />
+                  <span className="text-xs font-semibold text-ink-body leading-tight">{area}</span>
                 </div>
-                <div className="flex-1 grid grid-cols-6 divide-x divide-slate-100">
+                <div className="flex-1 grid grid-cols-6 divide-x divide-line">
                   {DIAS_SEMANA.map((diaStr) => {
                     // Filtrar los bloques que tienen al menos 1 unidad este día
                     const bloquesDelDia = bloquesArea.filter(b => (b.distribucionDiaria?.[diaStr] || 0) > 0);
                     return (
-                      <div key={diaStr} className="min-h-[80px] p-2 space-y-1.5">
+                      <div key={diaStr} className="min-h-20 p-2 space-y-1.5">
                         {bloquesDelDia.map(bloque => {
                           const emp = colaboradores.find(c => c.uid === bloque.empleadoId);
                           const isUrgent = bloque.esUrgente;
                           return (
-                            <div key={bloque.id} className={`group relative bg-white rounded-xl ring-1 ${isUrgent ? 'ring-red-400 bg-red-50' : meta.ring} px-2 py-2 text-[10px] space-y-0.5 hover:shadow-sm transition-all`}>
-                              <p className={`font-bold truncate ${isUrgent ? 'text-red-800' : 'text-slate-800'}`}>{emp?.nombre ?? "?"}</p>
-                              <p className="text-slate-500 truncate">{bloque.modelo}</p>
-                              <div className="flex items-center justify-between">
-                                <span className={`font-mono font-bold ${isUrgent ? 'text-red-600' : meta.color}`}>
-                                   {bloque.distribucionDiaria[diaStr]} uds
-                                </span>
-                              </div>
-                              <button onClick={() => handleEliminarBloque(bloque.id)} className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 p-0.5 text-slate-400 hover:text-red-500 transition-all">
-                                <Trash2 className="w-3 h-3" strokeWidth={1.5} />
+                            <div
+                              key={bloque.id}
+                              className={cn(
+                                "group relative rounded-control ring-1 px-2 py-2 space-y-0.5 transition-shadow hover:shadow-card",
+                                /* El rojo queda libre para "urgente", que es lo
+                                   único en esta grilla que exige reaccionar. */
+                                isUrgent
+                                  ? "bg-risk-surface ring-risk-line"
+                                  : "bg-surface ring-line",
+                              )}
+                            >
+                              <p className={cn("text-xs font-semibold truncate pr-4", isUrgent ? "text-risk" : "text-ink")}>
+                                {emp?.nombre ?? "Sin asignar"}
+                              </p>
+                              <p className="text-xs text-ink-muted truncate">{bloque.modelo}</p>
+                              <span className={cn("nums block text-xs font-bold", isUrgent ? "text-risk" : "text-ink-body")}>
+                                {bloque.distribucionDiaria[diaStr]} uds
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => handleEliminarBloque(bloque.id)}
+                                aria-label={`Eliminar el bloque de ${emp?.nombre ?? "sin asignar"} del ${diaStr}`}
+                                /* Visible siempre en pantallas táctiles, donde
+                                   no existe el hover que lo revelaba. */
+                                className="absolute top-1 right-1 p-1 rounded-md text-ink-muted hover:text-risk hover:bg-risk-surface transition-colors md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" strokeWidth={1.5} aria-hidden="true" />
                               </button>
                             </div>
                           );
@@ -1194,7 +1436,7 @@ function PlanificacionSemanal({
             );
           })}
         </div>
-      </div>
+      </Card>
     </div>
   );
 }

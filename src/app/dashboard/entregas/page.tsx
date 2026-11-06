@@ -6,8 +6,18 @@ import { db } from "@/lib/firebase";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { ComposableMap, Geographies, Geography, ZoomableGroup } from "react-simple-maps";
 import { scaleLinear } from "d3-scale";
-import { Map, Calendar, Search, MapPin, Truck, Filter, X } from "lucide-react";
+import { Map, Calendar, Inbox, MapPin, Truck, Filter, X, Lock } from "lucide-react";
 import type { Envio, Pedido, Cliente } from "@/types";
+import {
+  PageHeader,
+  Card,
+  CardHeader,
+  Badge,
+  Button,
+  Spinner,
+  EmptyState,
+  SelectInput,
+} from "@/components/ui";
 
 // URL al archivo estático en public
 const geoUrl = "/guatemala-departments.json";
@@ -19,6 +29,22 @@ const normalizarStr = (str: string) =>
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .trim();
+
+/**
+ * Las fechas de envío llegan como ISO. Sin formatear, la tarjeta mostraba
+ * la cadena cruda. Si el valor no es una fecha válida se devuelve tal cual
+ * en lugar de inventar un "Invalid Date".
+ */
+const formatearFecha = (iso: string): string => {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleDateString("es-GT", {
+    timeZone: "America/Guatemala",
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+};
 
 interface RegistroEntrega {
   envioId: string;
@@ -136,15 +162,21 @@ export default function EntregasPage() {
     return vals.length > 0 ? Math.max(...vals) : 1;
   }, [datosProcesados.deptoCounts]);
 
+  /* La rampa va del hundido del sistema al verde de marca: es el único
+     lugar del módulo donde el verde codifica un dato, no un estado. */
   const colorScale = scaleLinear<string>()
     .domain([0, maxEstufas])
-    .range(["#f1f5f9", "#059669"]); // Slate 100 to Emerald 600
+    .range(["#e2e8f0", "#047857"]);
 
   if (!tieneAcceso) {
     return (
-      <div className="p-8 text-center text-slate-500">
-        No tienes permisos para ver este módulo.
-      </div>
+      <Card nivel="panel">
+        <EmptyState
+          icono={Lock}
+          titulo="Este módulo está restringido"
+          descripcion="El mapa de entregas está disponible para Gerencia, Subgerencia y Supervisión. Si necesitas acceso, pídelo en Administración."
+        />
+      </Card>
     );
   }
 
@@ -154,160 +186,208 @@ export default function EntregasPage() {
     return normalizarStr(r.departamento).includes(filtroDept);
   });
 
+  const totalEstufas = registrosFiltrados.reduce((s, r) => s + r.cantidadEstufas, 0);
+
   return (
     <div className="space-y-6">
-      <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-3xl shadow-sm ring-1 ring-slate-200">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center ring-1 ring-indigo-100">
-            <Map className="w-6 h-6" />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold text-slate-800">Mapa de Entregas</h1>
-            <p className="text-sm text-slate-500">Historial y distribución geográfica</p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <select
+      <PageHeader
+        titulo="Mapa de Entregas"
+        descripcion="Historial y distribución geográfica"
+        icono={Map}
+        volverHref="/dashboard"
+        acciones={
+          <>
+            <SelectInput
+              id="filtro-tiempo"
+              aria-label="Filtrar por período"
               value={filtroTiempo}
               onChange={(e) => setFiltroTiempo(e.target.value as typeof filtroTiempo)}
-              className="pl-9 pr-8 py-2 bg-slate-50 border-0 ring-1 ring-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:ring-2 focus:ring-indigo-500"
+              iconLeft={<Filter className="w-4 h-4" strokeWidth={1.5} />}
+              className="w-auto min-w-52"
             >
-              <option value="todo">Histórico Completo</option>
-              <option value="este-ano">Este Año</option>
-              <option value="este-mes">Este Mes</option>
-            </select>
-          </div>
-          {filtroDept && (
-            <button
-              onClick={() => setFiltroDept("")}
-              className="inline-flex items-center gap-1.5 px-3 py-2 bg-red-50 text-red-600 rounded-xl text-sm font-medium hover:bg-red-100 ring-1 ring-red-200 transition-colors"
-            >
-              <X className="w-4 h-4" />
-              Quitar filtro: {filtroDept.toUpperCase()}
-            </button>
-          )}
-        </div>
-      </header>
+              <option value="todo">Histórico completo</option>
+              <option value="este-ano">Este año</option>
+              <option value="este-mes">Este mes</option>
+            </SelectInput>
+
+            {filtroDept && (
+              <Button
+                variante="danger"
+                onClick={() => setFiltroDept("")}
+                iconLeft={<X className="w-4 h-4" strokeWidth={2} />}
+              >
+                Quitar filtro
+              </Button>
+            )}
+          </>
+        }
+      />
 
       {cargando ? (
-        <div className="h-64 flex items-center justify-center bg-white rounded-3xl shadow-sm ring-1 ring-slate-200">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-        </div>
+        <Card nivel="panel" className="h-64 flex items-center justify-center">
+          <Spinner etiqueta="Cargando entregas…" visible />
+        </Card>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* MAPA */}
-          <div className="lg:col-span-2 bg-white rounded-3xl shadow-sm ring-1 ring-slate-200 p-6 flex flex-col relative">
-            <h2 className="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
-              <MapPin className="w-5 h-5 text-indigo-500" />
-              Densidad de Entregas
-            </h2>
-            
-            <div className="flex-1 bg-slate-50 rounded-2xl ring-1 ring-slate-200 overflow-hidden relative">
-              <ComposableMap
-                projection="geoMercator"
-                projectionConfig={{
-                  scale: 6500,
-                  center: [-90.25, 15.5] // Centro aproximado de Guatemala
-                }}
-                className="w-full h-full min-h-[400px]"
-              >
-                <ZoomableGroup>
-                  <Geographies geography={geoUrl}>
-                    {({ geographies }) =>
-                      geographies.map((geo) => {
-                        const deptoName = geo.properties.Departamento;
-                        const normalName = normalizarStr(deptoName || "");
-                        const estufas = datosProcesados.deptoCounts[normalName] || 0;
-                        const color = estufas > 0 ? colorScale(estufas) : "#f8fafc";
+          {/* ── MAPA ── */}
+          <Card nivel="panel" className="lg:col-span-2 flex flex-col overflow-hidden">
+            <CardHeader
+              titulo="Densidad de entregas"
+              subtitulo={
+                filtroDept
+                  ? `Filtrando por ${filtroDept.toUpperCase()}`
+                  : "Toca un departamento para filtrar el historial"
+              }
+              icono={<MapPin className="w-4 h-4" strokeWidth={1.5} />}
+            />
 
-                        return (
-                          <Geography
-                            key={geo.rsmKey}
-                            geography={geo}
-                            fill={color}
-                            stroke="#cbd5e1"
-                            strokeWidth={0.5}
-                            style={{
-                              default: { outline: "none" },
-                              hover: { fill: "#4f46e5", outline: "none", cursor: "pointer", stroke: "#e2e8f0", strokeWidth: 1 },
-                              pressed: { outline: "none" },
-                            }}
-                            onMouseEnter={() => {
-                              setTooltipContent(`${deptoName}: ${estufas} estufas`);
-                            }}
-                            onMouseLeave={() => {
-                              setTooltipContent("");
-                            }}
-                            onClick={() => {
-                              setFiltroDept(normalName);
-                            }}
-                          />
-                        );
-                      })
-                    }
-                  </Geographies>
-                </ZoomableGroup>
-              </ComposableMap>
-              
-              {/* Tooltip Overlay */}
-              {tooltipContent && (
-                <div className="absolute top-4 right-4 bg-slate-900 text-white text-xs font-bold px-3 py-2 rounded-lg shadow-xl pointer-events-none z-10">
-                  {tooltipContent}
+            <div className="p-4 sm:p-5">
+              <div className="bg-sunken rounded-card ring-1 ring-line overflow-hidden relative">
+                <ComposableMap
+                  projection="geoMercator"
+                  projectionConfig={{
+                    scale: 6500,
+                    center: [-90.25, 15.5], // Centro aproximado de Guatemala
+                  }}
+                  className="w-full h-full min-h-[22rem] sm:min-h-[26rem]"
+                >
+                  <ZoomableGroup>
+                    <Geographies geography={geoUrl}>
+                      {({ geographies }) =>
+                        geographies.map((geo) => {
+                          const deptoName = geo.properties.Departamento;
+                          const normalName = normalizarStr(deptoName || "");
+                          const estufas = datosProcesados.deptoCounts[normalName] || 0;
+                          const color = estufas > 0 ? colorScale(estufas) : "#f8fafc";
+                          const seleccionado = filtroDept === normalName;
+
+                          return (
+                            <Geography
+                              key={geo.rsmKey}
+                              geography={geo}
+                              fill={color}
+                              /* El hover y la selección se marcan con el
+                                 trazo, no con el relleno: cambiar el relleno
+                                 borraría el dato que el mapa codifica. */
+                              stroke={seleccionado ? "#0f172a" : "#cbd5e1"}
+                              strokeWidth={seleccionado ? 1.5 : 0.5}
+                              style={{
+                                default: { outline: "none", transition: "stroke 150ms" },
+                                hover: {
+                                  outline: "none",
+                                  cursor: "pointer",
+                                  stroke: "#0f172a",
+                                  strokeWidth: 1.25,
+                                },
+                                pressed: { outline: "none" },
+                              }}
+                              onMouseEnter={() =>
+                                setTooltipContent(
+                                  `${deptoName}: ${estufas} ${estufas === 1 ? "estufa" : "estufas"}`,
+                                )
+                              }
+                              onMouseLeave={() => setTooltipContent("")}
+                              onClick={() =>
+                                setFiltroDept((prev) => (prev === normalName ? "" : normalName))
+                              }
+                            />
+                          );
+                        })
+                      }
+                    </Geographies>
+                  </ZoomableGroup>
+                </ComposableMap>
+
+                {tooltipContent && (
+                  <div
+                    role="status"
+                    className="absolute top-3 left-3 right-3 sm:left-auto sm:right-3 sm:max-w-xs bg-action text-white text-xs font-semibold px-3 py-2 rounded-control shadow-overlay pointer-events-none z-10"
+                  >
+                    {tooltipContent}
+                  </div>
+                )}
+
+                {/* Leyenda de la rampa */}
+                <div className="absolute bottom-3 right-3 bg-surface/90 backdrop-blur px-3 py-2 rounded-control ring-1 ring-line shadow-card flex items-center gap-2 text-xs font-semibold text-ink-body">
+                  <span className="nums">0</span>
+                  <span
+                    className="w-20 h-2 rounded-full"
+                    style={{ backgroundImage: "linear-gradient(to right, #e2e8f0, #047857)" }}
+                    aria-hidden="true"
+                  />
+                  <span className="nums">{maxEstufas}</span>
                 </div>
-              )}
-
-              {/* Leyenda */}
-              <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur px-3 py-2 rounded-xl ring-1 ring-slate-200 shadow-sm flex items-center gap-2 text-xs font-medium text-slate-600">
-                <span>0</span>
-                <div className="w-24 h-2 bg-gradient-to-r from-slate-100 to-emerald-600 rounded-full" />
-                <span>{maxEstufas}</span>
               </div>
             </div>
-          </div>
+          </Card>
 
-          {/* TABLA HISTORIAL */}
-          <div className="lg:col-span-1 bg-white rounded-3xl shadow-sm ring-1 ring-slate-200 p-6 flex flex-col h-[500px]">
-            <h2 className="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-indigo-500" />
-              Últimas Entregas
-            </h2>
-            
-            <div className="flex-1 overflow-y-auto pr-2 space-y-3 custom-scrollbar">
+          {/* ── HISTORIAL ── */}
+          <Card nivel="panel" className="lg:col-span-1 flex flex-col overflow-hidden">
+            <CardHeader
+              titulo="Últimas entregas"
+              subtitulo={
+                registrosFiltrados.length > 0
+                  ? `${registrosFiltrados.length} ${registrosFiltrados.length === 1 ? "envío" : "envíos"} · ${totalEstufas} estufas`
+                  : undefined
+              }
+              icono={<Calendar className="w-4 h-4" strokeWidth={1.5} />}
+            />
+
+            <div className="custom-scrollbar flex-1 lg:max-h-[30rem] p-4 sm:p-5 space-y-3">
               {registrosFiltrados.length === 0 ? (
-                <div className="h-full flex flex-col items-center justify-center text-slate-400">
-                  <Search className="w-8 h-8 mb-2 opacity-50" />
-                  <p className="text-sm">No hay entregas registradas.</p>
-                </div>
+                <EmptyState
+                  icono={Inbox}
+                  titulo={
+                    filtroDept
+                      ? "Sin entregas en este departamento"
+                      : "Aún no hay entregas registradas"
+                  }
+                  descripcion={
+                    filtroDept
+                      ? "Quita el filtro para ver el resto del historial."
+                      : "Un envío aparece aquí cuando pasa a estado Entregado en Ventas y Envíos."
+                  }
+                  accion={
+                    filtroDept ? (
+                      <Button variante="secondary" onClick={() => setFiltroDept("")}>
+                        Quitar filtro
+                      </Button>
+                    ) : undefined
+                  }
+                />
               ) : (
                 registrosFiltrados.map((reg) => (
-                  <div key={reg.envioId} className="bg-slate-50 rounded-2xl p-4 ring-1 ring-slate-200">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs font-bold text-slate-500 bg-white px-2 py-1 rounded-md ring-1 ring-slate-200">
-                        {reg.fecha}
+                  <article
+                    key={reg.envioId}
+                    className="bg-sunken rounded-card ring-1 ring-line p-4"
+                  >
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                      <span className="nums text-xs font-semibold text-ink-muted">
+                        {formatearFecha(reg.fecha)}
                       </span>
-                      <span className="text-xs font-bold text-emerald-700 bg-emerald-100 px-2 py-1 rounded-md">
-                        {reg.cantidadEstufas} estufas
-                      </span>
+                      <Badge tono="ok" numerico>
+                        {reg.cantidadEstufas} {reg.cantidadEstufas === 1 ? "estufa" : "estufas"}
+                      </Badge>
                     </div>
-                    <p className="text-sm font-bold text-slate-800 leading-tight mb-1">
+
+                    <h3 className="text-sm font-semibold text-ink leading-snug">
                       {reg.comunidadDestino}
+                    </h3>
+
+                    <p className="text-xs text-ink-muted mt-1 flex items-center gap-1.5">
+                      <MapPin className="w-3.5 h-3.5 shrink-0" strokeWidth={1.5} aria-hidden="true" />
+                      {reg.departamento}
                     </p>
-                    <p className="text-xs text-slate-500 mb-3 flex items-center gap-1">
-                      <MapPin className="w-3 h-3" />
-                      Depto: {reg.departamento}
-                    </p>
-                    <div className="flex items-center gap-1.5 text-xs font-medium text-slate-400">
-                      <Truck className="w-3.5 h-3.5" />
+
+                    <p className="text-xs font-medium text-ink-muted mt-3 flex items-center gap-1.5">
+                      <Truck className="w-3.5 h-3.5 shrink-0" strokeWidth={1.5} aria-hidden="true" />
                       {reg.vehiculo}
-                    </div>
-                  </div>
+                    </p>
+                  </article>
                 ))
               )}
             </div>
-          </div>
+          </Card>
         </div>
       )}
     </div>
