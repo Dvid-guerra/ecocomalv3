@@ -55,7 +55,7 @@ export default function AsistenteInventario() {
     return (
       <button
         onClick={() => setAbierto(true)}
-        className="print:hidden fixed bottom-6 right-6 z-40 flex items-center gap-2 px-5 py-3 rounded-2xl bg-indigo-600 text-white font-bold shadow-lg hover:bg-indigo-700 transition-colors"
+        className="print:hidden fixed bottom-6 right-6 z-40 flex items-center gap-2 px-5 py-3 rounded-2xl bg-green-600 text-white font-bold shadow-lg hover:bg-green-700 transition-colors"
       >
         <Sparkles className="w-5 h-5" /> Asistente
       </button>
@@ -64,21 +64,21 @@ export default function AsistenteInventario() {
 
   return (
     <aside className="print:hidden fixed inset-0 sm:inset-auto sm:bottom-6 sm:right-6 z-40 sm:w-[420px] sm:h-[600px] flex flex-col bg-white sm:rounded-3xl shadow-2xl ring-1 ring-slate-200 overflow-hidden">
-      <header className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-indigo-600 text-white">
+      <header className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-green-600 text-white">
         <div className="flex items-center gap-2">
           <Bot className="w-5 h-5" />
           <div>
             <p className="font-bold leading-tight">Asistente de Inventario</p>
-            <p className="text-[11px] text-indigo-100">Solo consulta · no modifica datos</p>
+            <p className="text-[11px] text-green-100">Solo consulta · no modifica datos</p>
           </div>
         </div>
         <div className="flex items-center gap-1">
           {messages.length > 0 && (
-            <button onClick={() => { stop(); setMessages([]); clearError(); }} title="Nueva conversación" className="p-2 rounded-lg hover:bg-indigo-500">
+            <button onClick={() => { stop(); setMessages([]); clearError(); }} title="Nueva conversación" className="p-2 rounded-lg hover:bg-green-500">
               <RotateCcw className="w-4 h-4" />
             </button>
           )}
-          <button onClick={() => setAbierto(false)} title="Cerrar" className="p-2 rounded-lg hover:bg-indigo-500">
+          <button onClick={() => setAbierto(false)} title="Cerrar" className="p-2 rounded-lg hover:bg-green-500">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -92,7 +92,7 @@ export default function AsistenteInventario() {
               <button
                 key={s}
                 onClick={() => enviar(s)}
-                className="block w-full text-left text-sm px-4 py-2.5 rounded-xl bg-white ring-1 ring-slate-200 text-slate-700 hover:ring-indigo-300 hover:text-indigo-700 transition-colors"
+                className="block w-full text-left text-sm px-4 py-2.5 rounded-xl bg-white ring-1 ring-slate-200 text-slate-700 hover:ring-green-300 hover:text-green-700 transition-colors"
               >
                 {s}
               </button>
@@ -104,7 +104,7 @@ export default function AsistenteInventario() {
           <div key={m.id} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
             <div
               className={`max-w-[88%] space-y-1.5 rounded-2xl px-4 py-2.5 text-sm ${
-                m.role === "user" ? "bg-indigo-600 text-white" : "bg-white ring-1 ring-slate-200 text-slate-800"
+                m.role === "user" ? "bg-green-600 text-white" : "bg-white ring-1 ring-slate-200 text-slate-800"
               }`}
             >
               {m.parts.map((part, i) => {
@@ -160,14 +160,14 @@ export default function AsistenteInventario() {
           value={input}
           onChange={e => setInput(e.target.value)}
           placeholder={dictado.escuchando ? "Escuchando…" : "Escribe tu pregunta…"}
-          className="flex-1 rounded-xl border-slate-200 text-sm focus:ring-indigo-500 focus:border-indigo-500"
+          className="flex-1 rounded-xl border-slate-200 text-sm focus:ring-green-500 focus:border-green-500"
         />
         {ocupado ? (
           <button type="button" onClick={stop} title="Detener" className="p-2.5 rounded-xl bg-slate-800 text-white">
             <Square className="w-4 h-4" />
           </button>
         ) : (
-          <button type="submit" disabled={!input.trim()} title="Enviar" className="p-2.5 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-40">
+          <button type="submit" disabled={!input.trim()} title="Enviar" className="p-2.5 rounded-xl bg-green-600 text-white hover:bg-green-700 disabled:opacity-40">
             <Send className="w-4 h-4" />
           </button>
         )}

@@ -50,8 +50,10 @@ Una combinación que un ERP genérico no cubre: producción artesanal organizada
 ## Brand Commitments
 
 - Nombre: **Ecocomal**. Voz en español de Guatemala, directa y breve.
-- Identidad verde, declarada en tokens en `src/app/globals.css` (`--color-primary: #16a34a`).
-- **Pendiente del usuario**: no hay logotipo ni marca gráfica en el repositorio. `public/` solo contiene los SVG de plantilla de Next.js y `guatemala-departments.json`.
+- Identidad tomada del `BRAND KIT ECOCOMAL.pdf`, páginas 4–5: verde `#4D8C00`, naranja `#F98B1D`, amarillo `#F7D300` y marrón `#7F460D`. Para el naranja se sigue el HEX del manual ante su discrepancia con el RGB impreso. Los tonos derivados para superficies y contraste viven en `src/app/globals.css`.
+- Logotipos originales de color y blanco en `public/brand/`, copiados con autorización desde `ecocomal-web/public`. Conservar proporción, área libre y trazos; no reconstruirlos ni deformarlos.
+- Oswald para títulos principales e Inter para lectura operativa son sustitutos tipográficos autorizados, inspirados en el manual; no son las fuentes oficiales ni resuelven sus referencias tipográficas discordantes. Aplicación visual documentada en `DESIGN.md`.
+- Los colores corporativos no alteran el significado de estados, categorías ni etiquetas físicas de inventario.
 
 ## Evidence on Hand
 

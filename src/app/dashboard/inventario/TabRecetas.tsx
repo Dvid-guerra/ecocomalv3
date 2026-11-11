@@ -147,8 +147,8 @@ export default function TabRecetas({ materiales }: { materiales: Material[] }) {
       {/* Header Bento */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between bg-white rounded-2xl border border-slate-200/60 p-4 shadow-sm gap-4">
         <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center w-10 h-10 bg-indigo-50 rounded-xl">
-            <PackageOpen className="w-5 h-5 text-indigo-600" strokeWidth={1.5} />
+          <div className="flex items-center justify-center w-10 h-10 bg-green-50 rounded-xl">
+            <PackageOpen className="w-5 h-5 text-green-600" strokeWidth={1.5} />
           </div>
           <div>
             <h2 className="text-sm font-bold text-slate-900 tracking-tight">Estructura BOM (Por Piezas)</h2>
@@ -157,7 +157,7 @@ export default function TabRecetas({ materiales }: { materiales: Material[] }) {
         </div>
         <button 
           onClick={handleSeedAll} 
-          className="flex items-center justify-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-xl text-sm font-bold transition-colors shadow-sm w-full sm:w-auto"
+          className="flex items-center justify-center gap-2 px-4 py-2 bg-green-50 text-green-700 hover:bg-green-100 rounded-xl text-sm font-bold transition-colors shadow-sm w-full sm:w-auto"
         >
           <Wand2 className="w-4 h-4" /> Inyectar Piezas Base
         </button>
@@ -260,7 +260,7 @@ export default function TabRecetas({ materiales }: { materiales: Material[] }) {
                     value={nuevaPiezaNombre}
                     onChange={e => setNuevaPiezaNombre(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && handleAddPieza()}
-                    className="w-full px-4 py-2.5 text-sm bg-stone-50 ring-1 ring-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
+                    className="w-full px-4 py-2.5 text-sm bg-stone-50 ring-1 ring-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition-colors"
                   />
                 </div>
                 <button 
@@ -306,7 +306,7 @@ export default function TabRecetas({ materiales }: { materiales: Material[] }) {
                                 arr[pIdx].cantidadPieza = parseInt(e.target.value) || 1;
                                 setDraftPiezas(arr);
                               }}
-                              className="w-16 px-2 py-1 text-sm text-center bg-stone-50 border border-stone-200 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                              className="w-16 px-2 py-1 text-sm text-center bg-stone-50 border border-stone-200 rounded-lg focus:ring-2 focus:ring-green-500"
                             />
                           </div>
                           <button 
@@ -325,7 +325,7 @@ export default function TabRecetas({ materiales }: { materiales: Material[] }) {
                             <select 
                               onChange={(e) => handleAddInsumo(pIdx, e.target.value)} 
                               value="" 
-                              className="w-full pl-4 pr-10 py-2.5 text-sm bg-white ring-1 ring-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors appearance-none font-medium text-stone-700 shadow-sm"
+                              className="w-full pl-4 pr-10 py-2.5 text-sm bg-white ring-1 ring-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition-colors appearance-none font-medium text-stone-700 shadow-sm"
                             >
                               <option value="" disabled>+ Agregar Insumo a {pieza.nombrePieza}...</option>
                               {materiales.map(mat => (
@@ -361,7 +361,7 @@ export default function TabRecetas({ materiales }: { materiales: Material[] }) {
                                           type="number" step="0.01" min="0" 
                                           value={ins.cantidadReq} 
                                           onChange={e => updateInsumo(pIdx, iIdx, parseFloat(e.target.value) || 0)} 
-                                          className="w-full p-1.5 text-sm bg-white border border-stone-200 rounded-lg focus:ring-2 focus:ring-indigo-500 font-bold" 
+                                          className="w-full p-1.5 text-sm bg-white border border-stone-200 rounded-lg focus:ring-2 focus:ring-green-500 font-bold"
                                         />
                                       </td>
                                       <td className="py-2.5 text-center">
@@ -395,7 +395,7 @@ export default function TabRecetas({ materiales }: { materiales: Material[] }) {
               </button>
               <button 
                 onClick={handleSaveRecipe}
-                className="flex items-center gap-2 px-6 py-2.5 text-sm text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl font-semibold transition-colors shadow-sm"
+                className="flex items-center gap-2 px-6 py-2.5 text-sm text-white bg-green-600 hover:bg-green-700 rounded-xl font-semibold transition-colors shadow-sm"
               >
                 <Save className="w-4 h-4" /> Guardar Todo
               </button>

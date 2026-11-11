@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-11T00:00:00Z",
+  "title": "Design System: Ecocomal",
+  "extensions": {
+    "colorMeta": {
+      "brand": { "role": "primary", "displayName": "Verde Ecocomal", "tonalRamp": ["#12200e", "#203b00", "#294b00", "#345d00", "#4d8c00", "#80aa42", "#cdddaf", "#f4f8ed"] },
+      "brand-accent": { "role": "secondary", "displayName": "Naranja Ecocomal", "tonalRamp": ["oklch(15% 0.025 60)", "oklch(27% 0.055 60)", "oklch(39% 0.09 60)", "oklch(51% 0.12 60)", "oklch(63% 0.15 60)", "oklch(75% 0.14 60)", "oklch(87% 0.07 60)", "oklch(95% 0.025 60)"] },
+      "brand-yellow": { "role": "tertiary", "displayName": "Amarillo Ecocomal", "tonalRamp": ["oklch(15% 0.025 100)", "oklch(27% 0.05 100)", "oklch(39% 0.08 100)", "oklch(51% 0.11 100)", "oklch(63% 0.13 100)", "oklch(75% 0.15 100)", "oklch(87% 0.12 100)", "oklch(95% 0.04 100)"] },
+      "brand-earth": { "role": "tertiary", "displayName": "Marrón Ecocomal", "tonalRamp": ["oklch(15% 0.02 55)", "oklch(27% 0.045 55)", "oklch(39% 0.075 55)", "oklch(51% 0.10 55)", "oklch(63% 0.10 55)", "oklch(75% 0.08 55)", "oklch(87% 0.045 55)", "oklch(95% 0.02 55)"] }
+    },
+    "typographyMeta": {
+      "headline": { "displayName": "Título condensado", "purpose": "Oswald es un sustituto autorizado inspirado en el manual; h1, con pesos locales según componente." },
+      "body": { "displayName": "Lectura operativa", "purpose": "Inter para formularios, tablas y datos; sustituto autorizado, no fuente oficial." }
+    },
+    "shadows": [
+      { "name": "card", "value": "0 1px 2px rgb(15 23 42 / 0.04), 0 2px 8px rgb(15 23 42 / 0.04)", "purpose": "Tarjetas en reposo." },
+      { "name": "raised", "value": "0 2px 4px rgb(15 23 42 / 0.04), 0 8px 24px rgb(15 23 42 / 0.06)", "purpose": "Tarjetas interactivas al pasar el puntero." },
+      { "name": "overlay", "value": "0 8px 16px rgb(15 23 42 / 0.08), 0 24px 48px rgb(15 23 42 / 0.12)", "purpose": "Capas flotantes." }
+    ],
+    "motion": [
+      { "name": "ease-out-expo", "value": "cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "Entrada rise de 420 ms, desde 8 px y opacidad cero." },
+      { "name": "ease-standard", "value": "cubic-bezier(0.4, 0, 0.2, 1)", "purpose": "Pulso de carga de 1.6 s. Se respeta movimiento reducido." }
+    ],
+    "breakpoints": [ { "name": "sm", "value": "640px" } ]
+  },
+  "components": [
+    {
+      "name": "Acción principal", "kind": "button", "refersTo": "button-primary", "description": "Naranja con texto oscuro; 44 px táctiles y 36 px desde sm.",
+      "html": "<button class=\"ds-primary\">Guardar cambios</button>",
+      "css": ".ds-primary{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 16px;border:0;border-radius:var(--radius-control);background:var(--color-brand-accent);color:var(--color-brand-ink);font:600 14px var(--font-sans);box-shadow:var(--shadow-card);transition:background-color 150ms,box-shadow 150ms,color 150ms}.ds-primary:hover{background:var(--color-brand-accent-hover)}.ds-primary:focus-visible{outline:2px solid var(--color-action);outline-offset:2px}.ds-primary:active{transform:scale(.98)}.ds-primary:disabled{opacity:.5;cursor:not-allowed;transform:none}@media(min-width:640px){.ds-primary{min-height:36px}}@media(prefers-reduced-motion:reduce){.ds-primary{transition:none}}"
+    },
+    {
+      "name": "Acción secundaria", "kind": "button", "refersTo": "button-secondary", "description": "Superficie blanca, borde tenue y texto de cuerpo.",
+      "html": "<button class=\"ds-secondary\">Cancelar</button>",
+      "css": ".ds-secondary{min-height:44px;padding:0 16px;border:0;border-radius:var(--radius-control);background:var(--color-surface);color:var(--color-ink-body);box-shadow:0 0 0 1px var(--color-line);font:600 14px var(--font-sans);transition:background-color 150ms,box-shadow 150ms}.ds-secondary:hover{background:var(--color-sunken);box-shadow:0 0 0 1px var(--color-line-strong)}.ds-secondary:focus-visible{outline:2px solid var(--color-action);outline-offset:2px}.ds-secondary:active{transform:scale(.98)}@media(min-width:640px){.ds-secondary{min-height:36px}}@media(prefers-reduced-motion:reduce){.ds-secondary{transition:none}}"
+    },
+    {
+      "name": "Campo de texto", "kind": "input", "refersTo": "input", "description": "Campo hundido con foco visible y etiqueta persistente.",
+      "html": "<label class=\"ds-label\" for=\"ds-name\">Nombre</label><input class=\"ds-input\" id=\"ds-name\" placeholder=\"Nombre completo\">",
+      "css": ".ds-label{display:block;margin-bottom:6px;color:var(--color-ink-body);font:600 12px var(--font-sans)}.ds-input{min-height:44px;padding:0 14px;border:0;border-radius:var(--radius-control);background:var(--color-sunken);color:var(--color-ink-body);box-shadow:0 0 0 1px var(--color-line);font:14px var(--font-sans);transition:background-color 150ms,box-shadow 150ms}.ds-input::placeholder{color:var(--color-ink-muted)}.ds-input:hover{box-shadow:0 0 0 1px var(--color-line-strong)}.ds-input:focus{background:var(--color-surface)}.ds-input:focus-visible{outline:2px solid var(--color-action);outline-offset:2px}.ds-input[aria-invalid=true]{background:var(--color-risk-surface);box-shadow:0 0 0 1px var(--color-risk-line)}@media(min-width:640px){.ds-input{min-height:36px}}@media(prefers-reduced-motion:reduce){.ds-input{transition:none}}"
+    },
+    {
+      "name": "Tarjeta", "kind": "card", "refersTo": "card", "description": "Superficie de lectura; sin elevación interactiva para datos estáticos.",
+      "html": "<section class=\"ds-card\"><h2 class=\"ds-card-title\">Inventario</h2><p class=\"ds-card-body\">Resumen de materiales</p></section>",
+      "css": ".ds-card{border-radius:var(--radius-card);background:var(--color-surface);box-shadow:0 0 0 1px var(--color-line),var(--shadow-card);font-family:var(--font-sans)}.ds-card-title{padding:20px 20px 16px;margin:0;border-bottom:1px solid var(--color-line);color:var(--color-ink);font-size:14px;font-weight:600;letter-spacing:-.02em}.ds-card-body{padding:16px 20px;margin:0;color:var(--color-ink-body);font-size:14px}"
+    },
+    {
+      "name": "Insignia neutral", "kind": "chip", "refersTo": "chip", "description": "Texto breve de contexto; los estados usan variantes semánticas.",
+      "html": "<span class=\"ds-chip\">Pendiente</span>",
+      "css": ".ds-chip{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:var(--radius-control);background:var(--color-sunken);color:var(--color-ink-body);box-shadow:0 0 0 1px var(--color-line);font:600 12px var(--font-sans);white-space:nowrap}"
+    },
+    {
+      "name": "Navegación por tabs", "kind": "nav", "refersTo": "navigation-selected", "description": "Pista hundida con selección verde profunda.",
+      "html": "<nav class=\"ds-tabs\" aria-label=\"Secciones\"><button class=\"ds-tab\" aria-current=\"page\">Resumen</button><button class=\"ds-tab\">Historial</button></nav>",
+      "css": ".ds-tabs{display:flex;gap:4px;padding:4px;border-radius:var(--radius-control);background:var(--color-sunken);box-shadow:0 0 0 1px var(--color-line);overflow-x:auto}.ds-tab{min-height:44px;padding:0 16px;border:0;border-radius:var(--radius-control);background:transparent;color:var(--color-ink-muted);font:600 14px var(--font-sans)}.ds-tab[aria-current=page]{background:var(--color-action);color:white;box-shadow:var(--shadow-card)}.ds-tab:hover:not([aria-current]){color:var(--color-ink)}.ds-tab:focus-visible{outline:2px solid var(--color-action);outline-offset:2px}"
+    }
+  ],
+  "narrative": {
+    "northStar": "",
+    "overview": "La identidad real de Ecocomal acompaña una interfaz operativa existente: verde de marca, naranja de acción y superficies claras de matiz vegetal. La prioridad es leer datos y operar en oficina, planta y campo. Esta documentación registra la implementación; no establece una nueva composición de pantallas ni una metáfora creativa no aprobada.\n\nLa autoridad visual es `BRAND KIT ECOCOMAL.pdf`, páginas 4–5, proporcionado desde `C:/Users/david/Downloads/`. Los tokens implementados viven en `src/app/globals.css`; la carga tipográfica, en `src/app/layout.tsx`. Los PNG originales se copiaron con autorización desde el proyecto vecino `ecocomal-web/public` a `public/brand/ecocomal.png` y `public/brand/ecocomal-blanco.png`. `BrandLogo` conserva su proporción original de 1028 × 550.",
+    "keyCharacteristics": ["Marca original reconocible y sin reconstrucciones.", "Lectura sobria, contraste alto y controles táctiles.", "Jerarquía de acción naranja y navegación verde profundo.", "Estados y etiquetas operativas conservan su significado."],
+    "rules": [
+      { "name": "The Semantic Color Rule", "body": "Los colores de éxito, advertencia, riesgo e información conservan su significado. Las categorías y etiquetas físicas de inventario no se recolorean como decoración corporativa.", "section": "colors" },
+      { "name": "The Reading Rule", "body": "La fuente condensada sirve a títulos; el contenido operativo conserva Inter y etiquetas claras en español.", "section": "typography" }
+    ],
+    "dos": ["**Do** reutilizar los tokens de `globals.css` y los recursos originales de `public/brand`.", "**Do** conservar proporción del logo, foco visible y lectura de cifras en móvil.", "**Do** mantener estados, categorías y etiquetas físicas de inventario con su significado actual.", "**Do** describir Oswald e Inter como sustitutos autorizados."],
+    "donts": ["**Don't** reconstruir, deformar o recolorear los PNG del logo.", "**Don't** usar naranja o verde oficial con texto blanco sin verificar contraste.", "**Don't** extender la fuente condensada a tablas o formularios densos.", "**Don't** presentar decisiones digitales derivadas como normas impresas del manual."]
+  }
+}

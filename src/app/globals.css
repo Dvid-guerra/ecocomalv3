@@ -1,9 +1,9 @@
 @import "tailwindcss";
 
 /* ════════════════════════════════════════════════════════════
-   Ecocomal v3 — Sistema de diseño "Soft Corporate"
-   Gris frío (slate) como voz principal. El verde de marca es
-   acento de estado, nunca el color del cromo.
+   Ecocomal — gestión de fábrica.
+   Colores del BRAND KIT ECOCOMAL, p. 4. Los tonos derivados
+   resuelven contraste y superficies; no sustituyen los originales.
 
    Todo lo que está aquí se consume como utilidad de Tailwind:
    bg-canvas, text-ink-muted, rounded-card, shadow-card…
@@ -11,32 +11,73 @@
 ════════════════════════════════════════════════════════════ */
 
 @theme {
+  --color-brand:              #4d8c00;
+  --color-brand-dark:         #294b00;
+  --color-brand-soft:         #eff5e7;
+  --color-brand-accent:       #f98b1d;
+  --color-brand-accent-hover: #efa02f;
+  --color-brand-yellow:       #f7d300;
+  --color-brand-earth:        #7f460d;
+  --color-brand-ink:          #242719;
+
+  /* Compatibilidad con las pantallas que aún usan utilidades neutras. */
+  --color-slate-50:  #f8f8f4;
+  --color-slate-100: #f0f1e9;
+  --color-slate-200: #e1e4d7;
+  --color-slate-300: #c6cdbb;
+  --color-slate-400: #6b7563;
+  --color-slate-500: #5e6956;
+  --color-slate-600: #4b5743;
+  --color-slate-700: #39462f;
+  --color-slate-800: #283620;
+  --color-slate-900: #1b2915;
+  --color-slate-950: #12200e;
+  --color-green-50:  #f4f8ed;
+  --color-green-100: #e6efd8;
+  --color-green-200: #cdddaf;
+  --color-green-300: #adc881;
+  --color-green-400: #80aa42;
+  --color-green-500: #4d8c00;
+  --color-green-600: #427600;
+  --color-green-700: #345d00;
+  --color-green-800: #294b00;
+  --color-green-900: #203b00;
+  --color-emerald-50:  #f4f8ed;
+  --color-emerald-100: #e6efd8;
+  --color-emerald-200: #cdddaf;
+  --color-emerald-300: #adc881;
+  --color-emerald-400: #80aa42;
+  --color-emerald-500: #4d8c00;
+  --color-emerald-600: #427600;
+  --color-emerald-700: #345d00;
+  --color-emerald-800: #294b00;
+  --color-emerald-900: #203b00;
   /* ── Superficies ───────────────────────────────────────── */
-  --color-canvas:         #f8fafc; /* fondo de página */
+  --color-canvas:         #f8f8f4; /* fondo de página */
   --color-surface:        #ffffff; /* tarjetas y paneles */
-  --color-sunken:         #f1f5f9; /* campos, pistas de tabs, celdas */
+  --color-sunken:         #f0f1e9; /* campos, pistas de tabs, celdas */
 
   /* ── Líneas ────────────────────────────────────────────── */
-  --color-line:           #e2e8f0; /* separadores y anillos en reposo */
-  --color-line-strong:    #cbd5e1; /* anillo en hover y bordes de dato */
+  --color-line:           #e1e4d7; /* separadores y anillos en reposo */
+  --color-line-strong:    #c6cdbb; /* anillo en hover y bordes de dato */
 
   /* ── Texto. Mínimo 4.5:1 sobre blanco y sobre canvas. ──── */
-  --color-ink:            #0f172a; /* títulos — 17.4:1 */
-  --color-ink-body:       #1e293b; /* cuerpo — 13.6:1 */
-  --color-ink-muted:      #64748b; /* secundario — 4.8:1  (reemplaza slate-400) */
+  --color-ink:            #242719;
+  --color-ink-body:       #353b2e;
+  --color-ink-muted:      #5e6956;
   --color-ink-onDark:     #f8fafc;
 
-  /* ── Acción primaria: grafito, no verde. ───────────────── */
-  --color-action:         #0f172a;
-  --color-action-hover:   #1e293b;
+  /* Acción secundaria y navegación; naranja reservado al CTA principal. */
+  --color-action:         #345d00;
+  --color-action-hover:   #294b00;
 
   /* ── Estados. El verde entra solo por aquí. ────────────── */
-  --color-ok:             #047857; /* emerald-700 — 5.3:1, apto para texto */
-  --color-ok-surface:     #ecfdf5;
-  --color-ok-line:        #a7f3d0;
-  --color-warn:           #b45309; /* amber-700 — 5.1:1 */
-  --color-warn-surface:   #fffbeb;
-  --color-warn-line:      #fde68a;
+  --color-ok:             #345d00;
+  --color-ok-surface:     #f4f8ed;
+  --color-ok-line:        #cdddaf;
+  --color-warn:           #7f460d;
+  --color-warn-surface:   #fffbed;
+  --color-warn-line:      #f7d300;
   --color-risk:           #b91c1c; /* red-700 — 6.1:1 */
   --color-risk-surface:   #fef2f2;
   --color-risk-line:      #fecaca;
@@ -61,6 +102,7 @@
   /* ── Tipografía ────────────────────────────────────────── */
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
                "Segoe UI", Roboto, sans-serif;
+  --font-display: var(--font-oswald), ui-sans-serif, system-ui, sans-serif;
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -78,10 +120,38 @@ body {
 }
 
 /* Los títulos llevan el tracking cerrado del sistema. */
+@layer base {
 h1, h2, h3, h4 {
   color: var(--color-ink);
   letter-spacing: -0.02em;
   text-wrap: balance;
+}
+
+h1 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+}
+
+.brand-masthead {
+  background: #1b2915;
+  border-bottom: 3px solid var(--color-brand-accent);
+  color: white;
+}
+
+.brand-auth {
+  background: var(--color-canvas);
+  min-height: 100svh;
+}
+
+.brand-auth-header {
+  background: #1b2915;
+  border-bottom: 4px solid var(--color-brand-accent);
+}
+
+@media print {
+  .brand-masthead { background: white; color: var(--color-ink); }
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -93,7 +163,7 @@ h1, h2, h3, h4 {
 ════════════════════════════════════════════════════════════ */
 
 ::selection {
-  background-color: #cbd5e1;
+  background-color: #ffe1bd;
   color: var(--color-ink);
 }
 
@@ -167,7 +237,7 @@ a {
 
 /* Degradado de fondo de las tarjetas, en un solo lugar. */
 @utility surface-card {
-  background-image: linear-gradient(to bottom, #ffffff, color-mix(in oklab, var(--color-canvas) 55%, #ffffff));
+  background-color: var(--color-surface);
 }
 
 /* ════════════════════════════════════════════════════════════

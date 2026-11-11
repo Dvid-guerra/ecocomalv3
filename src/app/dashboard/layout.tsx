@@ -4,7 +4,8 @@ import { useEffect, ReactNode } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
-import { LogOut, Flame } from "lucide-react";
+import { LogOut } from "lucide-react";
+import { BrandLogo } from "@/components/BrandLogo";
 import { Spinner } from "@/components/ui";
 
 interface Props {
@@ -83,25 +84,19 @@ function TopBar({ sesion }: TopBarProps) {
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-surface/85 backdrop-blur-md border-b border-line">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between gap-4">
+    <header className="brand-masthead on-dark sticky top-0 z-40">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 min-h-20 py-3 flex items-center justify-between gap-4">
 
-        {/* ── Marca ──
-            Marca provisional: el logotipo de Ecocomal sigue pendiente.
-            La llama al menos pertenece al producto (estufas de leña) y
-            usa el mismo set de íconos y grosor de trazo que el resto. */}
+        {/* Marca original, sin reconstruir ni deformar el logotipo. */}
         <Link
           href="/dashboard"
           id="logo-ecocomal"
           className="flex items-center gap-2.5 shrink-0 group rounded-control"
           aria-label="Volver al inicio"
         >
-          <span className="w-7 h-7 rounded-control bg-action flex items-center justify-center transition-colors duration-150 group-hover:bg-action-hover">
-            <Flame className="w-4 h-4 text-white" strokeWidth={2} aria-hidden="true" />
-          </span>
-          <span className="font-bold text-ink text-sm">Ecocomal</span>
-          <span className="hidden sm:inline text-xs font-semibold text-ink-muted bg-sunken px-1.5 py-0.5 rounded-md ring-1 ring-line">
-            v3
+          <BrandLogo inverso className="w-24 sm:w-28" />
+          <span className="hidden sm:inline text-sm font-medium text-white/85 border-l border-white/25 pl-4 ml-3">
+            Gestión de fábrica
           </span>
         </Link>
 
@@ -109,20 +104,20 @@ function TopBar({ sesion }: TopBarProps) {
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2.5 min-w-0">
             <span
-              className="w-8 h-8 shrink-0 rounded-full bg-action flex items-center justify-center text-xs font-bold text-white"
+              className="w-8 h-8 shrink-0 rounded-full bg-brand-accent flex items-center justify-center text-xs font-bold text-brand-ink"
               aria-hidden="true"
             >
               {sesion.nombre.charAt(0).toUpperCase()}
             </span>
             <span className="hidden sm:flex flex-col leading-tight min-w-0">
-              <span className="text-xs font-semibold text-ink-body truncate">
+              <span className="text-xs font-semibold text-white truncate">
                 {sesion.nombre}
               </span>
-              <span className="text-xs text-ink-muted">{sesion.rol}</span>
+              <span className="text-xs text-white/80">{sesion.rol}</span>
             </span>
           </div>
 
-          <div className="hidden sm:block w-px h-4 bg-line mx-1" aria-hidden="true" />
+          <div className="hidden sm:block w-px h-4 bg-white/25 mx-1" aria-hidden="true" />
 
           <button
             id="btn-logout"
@@ -132,7 +127,7 @@ function TopBar({ sesion }: TopBarProps) {
             className="
               inline-flex items-center gap-1.5 shrink-0
               touch sm:min-h-8 px-3 rounded-control
-              text-xs font-semibold text-ink-muted
+              text-xs font-semibold text-white/85
               hover:text-risk hover:bg-risk-surface
               transition-colors duration-150 active:scale-[0.97]
             "

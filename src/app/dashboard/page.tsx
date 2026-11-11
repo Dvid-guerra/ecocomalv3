@@ -48,7 +48,7 @@ const MODULOS: ModuloConfig[] = [
       "Centro de operaciones. Registra y monitorea la actividad productiva, turnos activos y seguimiento de procesos en tiempo real.",
     href: "/dashboard/planta",
     icono: <FlaskConical className="w-6 h-6" strokeWidth={1.5} />,
-    colorFondo: "bg-emerald-600",
+    colorFondo: "bg-brand-dark",
     rolesPermitidos: undefined, // todos los roles
     destacado: true,
   },
@@ -59,7 +59,7 @@ const MODULOS: ModuloConfig[] = [
       "Gestión de usuarios, roles y configuración del sistema.",
     href: "/dashboard/administracion",
     icono: <Settings className="w-6 h-6" strokeWidth={1.5} />,
-    colorFondo: "bg-slate-700",
+    colorFondo: "bg-action",
     rolesPermitidos: ["Gerente", "Subgerente", "Supervisor"],
     etiquetaRol: "Gerente / Sub / Sup",
   },
@@ -70,7 +70,7 @@ const MODULOS: ModuloConfig[] = [
       "Análisis financiero completo: flujo de caja, rentabilidad, reportes y proyecciones económicas para la toma de decisiones.",
     href: "/dashboard/finanzas",
     icono: <TrendingUp className="w-6 h-6" strokeWidth={1.5} />,
-    colorFondo: "bg-amber-600",
+    colorFondo: "bg-brand-earth",
     rolesPermitidos: ["Gerente"],
     etiquetaRol: "Exclusivo Gerente",
   },
@@ -81,7 +81,7 @@ const MODULOS: ModuloConfig[] = [
       "Control comercial y logística. Gestión de directorio de clientes, registro de ventas y planificación de despachos y entregas.",
     href: "/dashboard/ventas",
     icono: <Package className="w-6 h-6" strokeWidth={1.5} />,
-    colorFondo: "bg-blue-600",
+    colorFondo: "bg-action",
     rolesPermitidos: ["Gerente", "Subgerente", "Supervisor"],
     etiquetaRol: "Gerente / Sub / Sup",
   },
@@ -92,7 +92,7 @@ const MODULOS: ModuloConfig[] = [
       "Visualización geográfica de estufas entregadas a nivel nacional mediante mapas de calor y un registro histórico detallado.",
     href: "/dashboard/entregas",
     icono: <Map className="w-6 h-6" strokeWidth={1.5} />,
-    colorFondo: "bg-indigo-600",
+    colorFondo: "bg-brand-earth",
     rolesPermitidos: ["Gerente", "Subgerente", "Supervisor"],
     etiquetaRol: "Gerente / Sub / Sup",
   },
@@ -103,7 +103,7 @@ const MODULOS: ModuloConfig[] = [
       "Catálogo de materia prima, gestión de proveedores y generador automático de órdenes de compra.",
     href: "/dashboard/inventario",
     icono: <Package className="w-6 h-6" strokeWidth={1.5} />,
-    colorFondo: "bg-teal-600",
+    colorFondo: "bg-brand-dark",
     rolesPermitidos: ["Gerente", "Subgerente", "Supervisor"],
     etiquetaRol: "Gerente / Sub / Sup",
   },
@@ -199,8 +199,8 @@ function TarjetaPermitida({
         shadow-xs shadow-inner shadow-slate-100/40
         p-6
         transition-all duration-300
-        hover:-translate-y-1
-        hover:ring-slate-300/80
+        hover:-translate-y-0.5
+        hover:ring-brand/50
         hover:shadow-md hover:from-white hover:to-white
         active:scale-[0.99]
         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900/60

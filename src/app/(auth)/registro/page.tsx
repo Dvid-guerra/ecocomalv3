@@ -6,6 +6,7 @@ import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { BrandLogo } from "@/components/BrandLogo";
 
 /**
  * Rol base asignado a cualquier cuenta creada desde esta vista pública.
@@ -75,18 +76,13 @@ export default function RegistroPage() {
   };
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-emerald-100 p-4">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden">
+    <main className="brand-auth flex items-center justify-center p-4 sm:p-8">
+      <div className="w-full max-w-md bg-surface rounded-panel shadow-raised overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-r from-green-600 to-emerald-500 px-8 py-8 text-center">
-          <div className="inline-flex items-center justify-center w-14 h-14 bg-white/20 rounded-full mb-3">
-            <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-            </svg>
-          </div>
+        <div className="brand-auth-header on-dark px-8 py-8 text-center">
+          <BrandLogo inverso className="mx-auto w-36 mb-5" />
           <h1 className="text-xl font-bold text-white">Crear Cuenta</h1>
-          <p className="text-green-100 text-xs mt-1">
+          <p className="text-white/80 text-xs mt-2">
             Rol asignado automáticamente: <span className="font-semibold">Colaborador</span>
           </p>
         </div>
@@ -105,7 +101,7 @@ export default function RegistroPage() {
                 required
                 value={nombre}
                 onChange={(e) => setNombre(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition text-sm"
+                className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition text-sm placeholder:text-ink-muted"
                 placeholder="Juan Pérez"
               />
             </div>
@@ -122,7 +118,7 @@ export default function RegistroPage() {
                 autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition text-sm"
+                className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition text-sm placeholder:text-ink-muted"
                 placeholder="usuario@ecocomal.com"
               />
             </div>
@@ -139,7 +135,7 @@ export default function RegistroPage() {
                 autoComplete="new-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition text-sm"
+                className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition text-sm placeholder:text-ink-muted"
                 placeholder="Mín. 6 caracteres"
               />
             </div>
@@ -156,7 +152,7 @@ export default function RegistroPage() {
                 autoComplete="new-password"
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition text-sm"
+                className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition text-sm placeholder:text-ink-muted"
                 placeholder="Repite la contraseña"
               />
             </div>
@@ -175,7 +171,7 @@ export default function RegistroPage() {
               id="btn-registro"
               type="submit"
               disabled={loading}
-              className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold py-2.5 rounded-lg transition-colors duration-200 text-sm flex items-center justify-center gap-2"
+              className="w-full bg-brand-accent hover:bg-brand-accent-hover disabled:opacity-60 disabled:cursor-not-allowed text-brand-ink font-semibold min-h-11 py-2.5 rounded-control transition-colors duration-200 text-sm flex items-center justify-center gap-2"
             >
               {loading ? (
                 <>

@@ -8,6 +8,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { UsuarioFirestore } from "@/types";
 import { crearSesionServidor } from "@/lib/auth-session";
+import { BrandLogo } from "@/components/BrandLogo";
 
 /* ─────────────────────────────────────────────
    Traducción de códigos de error Firebase
@@ -90,19 +91,14 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-emerald-100 p-4">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden">
+    <main className="brand-auth flex items-center justify-center p-4 sm:p-8">
+      <div className="w-full max-w-md bg-surface rounded-panel shadow-raised overflow-hidden">
 
         {/* Header */}
-        <div className="bg-gradient-to-r from-green-600 to-emerald-500 px-8 py-10 text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-white/20 rounded-full mb-4">
-            <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-            </svg>
-          </div>
-          <h1 className="text-2xl font-bold text-white">Ecocomal v3</h1>
-          <p className="text-green-100 text-sm mt-1">Sistema de Gestión Interno</p>
+        <div className="brand-auth-header on-dark px-8 py-8 text-center">
+          <BrandLogo inverso className="mx-auto w-40 mb-5" />
+          <h1 className="text-2xl text-white">Gestión de fábrica</h1>
+          <p className="text-white/80 text-sm mt-2">Sistema de Gestión Interno</p>
         </div>
 
         {/* Formulario */}
@@ -128,7 +124,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none
-                  focus:ring-2 focus:ring-green-500 focus:border-transparent transition text-sm"
+                  focus:ring-2 focus:ring-green-500 focus:border-transparent transition text-sm placeholder:text-ink-muted"
                 placeholder="usuario@ecocomal.com"
               />
             </div>
@@ -145,7 +141,7 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none
-                  focus:ring-2 focus:ring-green-500 focus:border-transparent transition text-sm"
+                  focus:ring-2 focus:ring-green-500 focus:border-transparent transition text-sm placeholder:text-ink-muted"
                 placeholder="••••••••"
               />
             </div>
@@ -166,8 +162,8 @@ export default function LoginPage() {
               id="btn-login"
               type="submit"
               disabled={loading}
-              className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-60
-                disabled:cursor-not-allowed text-white font-semibold py-2.5 rounded-lg
+              className="w-full bg-brand-accent hover:bg-brand-accent-hover disabled:opacity-60
+                disabled:cursor-not-allowed text-brand-ink font-semibold min-h-11 py-2.5 rounded-control
                 transition-colors duration-200 text-sm flex items-center justify-center gap-2"
             >
               {loading ? (

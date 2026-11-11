@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import { BrandLogo } from "@/components/BrandLogo";
 import { db } from "@/lib/firebase";
 import { 
   collection, 
@@ -25,7 +26,6 @@ import {
   FileText,
   Send,
   ChevronRight,
-  Flame,
   CalendarDays,
   Timer,
   AlertCircle,
@@ -448,26 +448,21 @@ export default function EmpleadoPortalPage() {
     <div className="min-h-screen bg-canvas">
 
       {/* ── ENCABEZADO MÓVIL OPTIMIZADO ── */}
-      <header className="sticky top-0 z-40 bg-surface/85 backdrop-blur-md border-b border-line">
-        <div className="max-w-2xl mx-auto px-4 h-16 flex items-center justify-between gap-3">
+      <header className="brand-masthead on-dark sticky top-0 z-40">
+        <div className="max-w-2xl mx-auto px-4 min-h-20 py-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
-            <span
-              className="w-9 h-9 rounded-control bg-action flex items-center justify-center shrink-0"
-              aria-hidden="true"
-            >
-              <Flame className="w-4 h-4 text-white" strokeWidth={2} />
-            </span>
+            <BrandLogo inverso className="w-20 sm:w-24" />
             <div className="min-w-0">
-              <p className="text-sm font-bold text-ink leading-tight truncate">
+              <p className="text-sm font-bold text-white leading-tight truncate">
                 Hola, {nombreCorto}
               </p>
-              <p className="text-xs text-ink-muted">Colaborador de planta</p>
+              <p className="text-xs text-white/80">Colaborador de planta</p>
             </div>
           </div>
           <button
             type="button"
             onClick={async () => { await cerrarSesion(); router.replace("/login"); }}
-            className="touch shrink-0 inline-flex items-center gap-1.5 px-3 rounded-control text-xs font-semibold text-ink-muted hover:text-risk hover:bg-risk-surface transition-colors active:scale-95"
+            className="touch shrink-0 inline-flex items-center gap-1.5 px-3 rounded-control text-xs font-semibold text-white hover:text-risk hover:bg-risk-surface transition-colors active:scale-95"
           >
             <LogOut className="w-4 h-4" strokeWidth={1.5} aria-hidden="true" />
             {/* El breakpoint `xs` no existe en Tailwind: esta etiqueta

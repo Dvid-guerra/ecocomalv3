@@ -224,7 +224,7 @@ export default function InventarioPage() {
       {/* Header Print-Hidden */}
       <header className="print:hidden flex flex-col lg:flex-row lg:flex-wrap lg:items-center justify-between gap-4 bg-white p-6 rounded-3xl shadow-sm ring-1 ring-slate-200">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center ring-1 ring-indigo-100">
+          <div className="w-12 h-12 bg-green-50 text-green-600 rounded-2xl flex items-center justify-center ring-1 ring-green-100">
             <Package className="w-6 h-6" />
           </div>
           <div>
@@ -248,31 +248,31 @@ export default function InventarioPage() {
         <div className="flex gap-2 bg-slate-100 p-1 rounded-xl">
           <button
             onClick={() => setActiveTab("inventario")}
-            className={`px-4 py-2 text-sm font-bold rounded-lg transition-colors ${activeTab === "inventario" ? "bg-white text-indigo-700 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+            className={`px-4 py-2 text-sm font-bold rounded-lg transition-colors ${activeTab === "inventario" ? "bg-white text-green-700 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
           >
             Inventario
           </button>
           <button
             onClick={() => setActiveTab("movimientos")}
-            className={`px-4 py-2 text-sm font-bold rounded-lg transition-colors ${activeTab === "movimientos" ? "bg-white text-indigo-700 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+            className={`px-4 py-2 text-sm font-bold rounded-lg transition-colors ${activeTab === "movimientos" ? "bg-white text-green-700 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
           >
             Movimientos
           </button>
           <button
             onClick={() => setActiveTab("catalogo")}
-            className={`px-4 py-2 text-sm font-bold rounded-lg transition-colors ${activeTab === "catalogo" ? "bg-white text-indigo-700 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+            className={`px-4 py-2 text-sm font-bold rounded-lg transition-colors ${activeTab === "catalogo" ? "bg-white text-green-700 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
           >
             Catálogo Base
           </button>
           <button
             onClick={() => setActiveTab("pedidos")}
-            className={`px-4 py-2 text-sm font-bold rounded-lg transition-colors ${activeTab === "pedidos" ? "bg-white text-indigo-700 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+            className={`px-4 py-2 text-sm font-bold rounded-lg transition-colors ${activeTab === "pedidos" ? "bg-white text-green-700 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
           >
             Hacer Pedido
           </button>
           <button
             onClick={() => setActiveTab("recetas")}
-            className={`px-4 py-2 text-sm font-bold rounded-lg transition-colors ${activeTab === "recetas" ? "bg-white text-indigo-700 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+            className={`px-4 py-2 text-sm font-bold rounded-lg transition-colors ${activeTab === "recetas" ? "bg-white text-green-700 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
           >
             Recetas (BOM)
           </button>
@@ -286,7 +286,7 @@ export default function InventarioPage() {
         <div className="bg-white rounded-3xl shadow-sm ring-1 ring-slate-200 p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-              <Package className="w-5 h-5 text-indigo-500" /> Control de Existencias (Stock)
+              <Package className="w-5 h-5 text-green-500" /> Control de Existencias (Stock)
             </h2>
           </div>
           
@@ -318,13 +318,13 @@ export default function InventarioPage() {
                         <div className="flex items-center justify-center gap-2">
                           <button onClick={() => setMovimiento({ materialId: m.id, tipo: "salida" })} title="Registrar salida" className="w-6 h-6 rounded bg-slate-200 text-slate-600 flex items-center justify-center hover:bg-slate-300 font-bold">-</button>
                           <span className={`w-12 text-center font-mono font-bold text-base ${bajoReorden ? 'text-red-600' : 'text-slate-700'}`}>{stock}</span>
-                          <button onClick={() => setMovimiento({ materialId: m.id, tipo: "entrada" })} title="Registrar entrada" className="w-6 h-6 rounded bg-indigo-100 text-indigo-700 flex items-center justify-center hover:bg-indigo-200 font-bold">+</button>
+                          <button onClick={() => setMovimiento({ materialId: m.id, tipo: "entrada" })} title="Registrar entrada" className="w-6 h-6 rounded bg-green-100 text-green-700 flex items-center justify-center hover:bg-green-200 font-bold">+</button>
                           <button onClick={() => setMovimiento({ materialId: m.id, tipo: "ajuste" })} title="Ajustar por conteo físico" className="ml-1 text-xs font-bold text-amber-600 hover:text-amber-700">Ajustar</button>
                         </div>
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-center gap-1">
-                          <input type="number" min="0" value={reorden} onChange={(e) => handleUpdatePuntoReorden(m.id, parseInt(e.target.value) || 0)} className="w-16 p-1 text-center text-sm border-slate-200 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" />
+                          <input type="number" min="0" value={reorden} onChange={(e) => handleUpdatePuntoReorden(m.id, parseInt(e.target.value) || 0)} className="w-16 p-1 text-center text-sm border-slate-200 rounded-lg focus:ring-green-500 focus:border-green-500" />
                         </div>
                       </td>
                       <td className="px-4 py-3 text-center">
@@ -361,12 +361,12 @@ export default function InventarioPage() {
           {/* Col 1: Proveedores */}
           <div className="bg-white rounded-3xl shadow-sm ring-1 ring-slate-200 p-6 flex flex-col h-[500px]">
             <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-              <Truck className="w-5 h-5 text-indigo-500" /> Proveedores
+              <Truck className="w-5 h-5 text-green-500" /> Proveedores
             </h2>
             <form onSubmit={handleAddProveedor} className="flex gap-2 mb-4">
               <input type="color" value={nuevoProv.colorEtiqueta} onChange={e => setNuevoProv({...nuevoProv, colorEtiqueta: e.target.value})} className="w-10 h-10 rounded cursor-pointer" title="Color Etiqueta" />
-              <input type="text" placeholder="Nombre Proveedor..." value={nuevoProv.nombre} onChange={e => setNuevoProv({...nuevoProv, nombre: e.target.value})} className="flex-1 rounded-xl border-slate-200 text-sm focus:ring-indigo-500 focus:border-indigo-500" required />
-              <button type="submit" className="bg-indigo-600 text-white p-2 rounded-xl hover:bg-indigo-700"><Plus className="w-5 h-5"/></button>
+              <input type="text" placeholder="Nombre Proveedor..." value={nuevoProv.nombre} onChange={e => setNuevoProv({...nuevoProv, nombre: e.target.value})} className="flex-1 rounded-xl border-slate-200 text-sm focus:ring-green-500 focus:border-green-500" required />
+              <button type="submit" className="bg-green-600 text-white p-2 rounded-xl hover:bg-green-700"><Plus className="w-5 h-5"/></button>
             </form>
             <div className="flex-1 overflow-y-auto space-y-2 custom-scrollbar pr-2">
               {proveedores.map(p => (
@@ -385,20 +385,20 @@ export default function InventarioPage() {
           <div className="lg:col-span-2 bg-white rounded-3xl shadow-sm ring-1 ring-slate-200 p-6 flex flex-col h-[500px]">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                <Database className="w-5 h-5 text-indigo-500" /> Catálogo de Materiales
+                <Database className="w-5 h-5 text-green-500" /> Catálogo de Materiales
               </h2>
               {materiales.length === 0 && (
-                <button onClick={seedDatosIniciales} className="text-xs bg-indigo-50 text-indigo-600 px-3 py-1.5 rounded-lg font-bold hover:bg-indigo-100">Cargar Catálogo Base</button>
+                <button onClick={seedDatosIniciales} className="text-xs bg-green-50 text-green-600 px-3 py-1.5 rounded-lg font-bold hover:bg-green-100">Cargar Catálogo Base</button>
               )}
             </div>
             
             <form onSubmit={handleAddMaterial} className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4 bg-slate-50 p-3 rounded-2xl ring-1 ring-slate-100">
-              <input type="text" placeholder="Material (ej. Tubo 2x6)..." value={nuevoMat.nombre} onChange={e => setNuevoMat({...nuevoMat, nombre: e.target.value})} className="col-span-2 rounded-xl border-slate-200 text-sm focus:ring-indigo-500 focus:border-indigo-500" required />
-              <select value={nuevoMat.proveedorDefectoId} onChange={e => setNuevoMat({...nuevoMat, proveedorDefectoId: e.target.value})} className="rounded-xl border-slate-200 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+              <input type="text" placeholder="Material (ej. Tubo 2x6)..." value={nuevoMat.nombre} onChange={e => setNuevoMat({...nuevoMat, nombre: e.target.value})} className="col-span-2 rounded-xl border-slate-200 text-sm focus:ring-green-500 focus:border-green-500" required />
+              <select value={nuevoMat.proveedorDefectoId} onChange={e => setNuevoMat({...nuevoMat, proveedorDefectoId: e.target.value})} className="rounded-xl border-slate-200 text-sm focus:ring-green-500 focus:border-green-500">
                 <option value="">Proveedor...</option>
                 {proveedores.map(p => <option key={p.id} value={p.id}>{p.nombre}</option>)}
               </select>
-              <input type="number" step="0.01" placeholder="Precio Est." value={nuevoMat.precioEstimado || ""} onChange={e => setNuevoMat({...nuevoMat, precioEstimado: parseFloat(e.target.value)})} className="rounded-xl border-slate-200 text-sm focus:ring-indigo-500 focus:border-indigo-500" required />
+              <input type="number" step="0.01" placeholder="Precio Est." value={nuevoMat.precioEstimado || ""} onChange={e => setNuevoMat({...nuevoMat, precioEstimado: parseFloat(e.target.value)})} className="rounded-xl border-slate-200 text-sm focus:ring-green-500 focus:border-green-500" required />
               <button type="submit" className="bg-emerald-600 text-white p-2 rounded-xl hover:bg-emerald-700 flex items-center justify-center"><Plus className="w-5 h-5"/></button>
             </form>
 
@@ -437,7 +437,7 @@ export default function InventarioPage() {
                         <td className="px-4 py-3 font-mono">Q{Number(m.precioEstimado || 0).toFixed(2)}</td>
                         <td className="px-4 py-3">
                           <div className="flex items-center justify-center gap-3">
-                            <button onClick={() => setFichaId(m.id)} className="text-slate-400 hover:text-indigo-600" title="Editar ficha"><Pencil className="w-4 h-4"/></button>
+                            <button onClick={() => setFichaId(m.id)} className="text-slate-400 hover:text-green-600" title="Editar ficha"><Pencil className="w-4 h-4"/></button>
                             <button onClick={() => handleDeleteMaterial(m.id)} className="text-slate-400 hover:text-red-500" title="Eliminar"><Trash2 className="w-4 h-4"/></button>
                           </div>
                         </td>
@@ -456,7 +456,7 @@ export default function InventarioPage() {
           {/* Tools Print Hidden */}
           <div className="print:hidden p-4 bg-slate-50 border-b border-slate-200 flex flex-col md:flex-row items-center gap-4 justify-between">
             <div className="flex items-center gap-2">
-              <select onChange={(e) => handleAddToOrder(e.target.value)} value="" className="rounded-xl border-slate-300 text-sm font-medium w-64 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm">
+              <select onChange={(e) => handleAddToOrder(e.target.value)} value="" className="rounded-xl border-slate-300 text-sm font-medium w-64 focus:ring-green-500 focus:border-green-500 shadow-sm">
                 <option value="" disabled>+ Agregar Material al Pedido</option>
                 {materiales.map(m => (
                   <option key={m.id} value={m.id}>{m.nombre}</option>
@@ -513,7 +513,7 @@ export default function InventarioPage() {
                             <input type="text" value={item.materialNombre} readOnly className="w-full p-2 border-0 bg-transparent text-sm focus:ring-0" />
                           </td>
                           <td className="border border-slate-800 p-0">
-                            <input type="number" min="1" value={item.cantidad || ""} onChange={e => updateOrderItem(idx, "cantidad", parseFloat(e.target.value) || 0)} className="w-full p-2 border-0 bg-transparent text-sm text-center font-bold text-indigo-700 focus:ring-0 bg-indigo-50/50" />
+                            <input type="number" min="1" value={item.cantidad || ""} onChange={e => updateOrderItem(idx, "cantidad", parseFloat(e.target.value) || 0)} className="w-full p-2 border-0 bg-transparent text-sm text-center font-bold text-green-700 focus:ring-0 bg-green-50/50" />
                           </td>
                           <td className="border border-slate-800 p-0" style={{ backgroundColor: prov?.colorEtiqueta || '#f8fafc' }}>
                             <select value={item.proveedorId} onChange={e => updateOrderItem(idx, "proveedorId", e.target.value)} className={`w-full p-2 border-0 bg-transparent text-sm font-bold text-center focus:ring-0 cursor-pointer ${textColor}`}>

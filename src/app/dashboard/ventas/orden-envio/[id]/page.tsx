@@ -6,7 +6,8 @@ import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
 import type { Pedido, Cliente } from "@/types";
-import { ArrowLeft, Printer, Scissors, Home } from "lucide-react";
+import { ArrowLeft, Printer, Scissors } from "lucide-react";
+import { BrandLogo } from "@/components/BrandLogo";
 
 const PIEZAS_POR_MODELO: Record<string, { nombre: string; cantidad: number }[]> = {
   "Ecoplancha Híbrida": [
@@ -150,10 +151,7 @@ export default function OrdenEnvioPage({ params }: { params: Promise<{ id: strin
           
           {/* Logo (Left) */}
           <div className="flex flex-col items-center flex-shrink-0 w-32 relative">
-            <Home className="w-12 h-12 text-orange-500" strokeWidth={1} fill="currentColor" />
-            <div className="font-black text-xl -mt-2 tracking-tighter" style={{ fontFamily: 'Impact, sans-serif' }}>
-              <span className="text-orange-500">ECO</span><span className="text-green-600">COMAL</span>
-            </div>
+            <BrandLogo className="w-28" />
           </div>
 
           {/* Center Title and Fields */}

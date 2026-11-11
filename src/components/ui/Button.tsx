@@ -8,12 +8,11 @@ type Variante = "primary" | "secondary" | "ghost" | "danger";
 type Tamano = "sm" | "md" | "lg";
 
 /**
- * La acción primaria es grafito, no verde: el verde del sistema está
- * reservado a los estados (ok / warn / risk), así que un botón verde
- * leería como "correcto" en lugar de "acción".
+ * El naranja de marca identifica la acción principal; el texto oscuro
+ * conserva contraste incluso en la pantalla del taller.
  */
 const VARIANTE_CLASES: Record<Variante, string> = {
-  primary: "bg-action text-white hover:bg-action-hover shadow-card",
+  primary: "bg-brand-accent text-brand-ink hover:bg-brand-accent-hover shadow-card",
   secondary: "bg-surface text-ink-body ring-1 ring-line hover:bg-sunken hover:ring-line-strong",
   ghost: "text-ink-muted hover:bg-sunken hover:text-ink",
   danger: "bg-risk-surface text-risk ring-1 ring-risk-line hover:bg-risk-line/40",

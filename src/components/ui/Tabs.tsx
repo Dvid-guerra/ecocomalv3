@@ -60,7 +60,7 @@ export function Tabs<T extends string>({
               "text-sm font-semibold transition-[background-color,color,box-shadow] duration-150",
               completo && "flex-1",
               activa
-                ? "bg-surface text-ink shadow-card ring-1 ring-line"
+                ? "bg-action text-white shadow-card"
                 : "text-ink-muted hover:text-ink",
             )}
           >
@@ -70,7 +70,7 @@ export function Tabs<T extends string>({
               <span
                 className={cn(
                   "nums text-xs font-bold px-1.5 rounded-full",
-                  activa ? "bg-action text-white" : "bg-line text-ink-body",
+                  activa ? "bg-white/20 text-white" : "bg-line text-ink-body",
                 )}
               >
                 {conteo}
