@@ -7,6 +7,7 @@ import Link from "next/link";
 import { LogOut } from "lucide-react";
 import { BrandLogo } from "@/components/BrandLogo";
 import { Spinner } from "@/components/ui";
+import { destinoSinAcceso, puedeEntrar } from "@/lib/acceso";
 
 interface Props {
   children: ReactNode;
@@ -24,6 +25,12 @@ export default function DashboardLayout({ children }: Props) {
   const router   = useRouter();
   const pathname = usePathname();
 
+  /*
+   * El rol decide la ruta según la política única de `@/lib/acceso`, la misma
+   * que aplica el proxy en el borde.
+   */
+  const sinAcceso = !!sesion && !puedeEntrar(sesion.rol, pathname);
+
   /* ── Guardias de acceso ── */
   useEffect(() => {
     if (cargando) return;
@@ -33,11 +40,8 @@ export default function DashboardLayout({ children }: Props) {
       return;
     }
 
-    const esFinanzas = pathname.startsWith("/dashboard/finanzas");
-    if (esFinanzas && sesion.rol !== "Gerente") {
-      router.replace("/dashboard?acceso=denegado");
-    }
-  }, [cargando, sesion, pathname, router]);
+    if (sinAcceso) router.replace(destinoSinAcceso(sesion.rol));
+  }, [cargando, sesion, sinAcceso, router]);
 
   /* ── Spinner solo en primer arranque ── */
   if (cargando && !sesion) {
@@ -48,7 +52,12 @@ export default function DashboardLayout({ children }: Props) {
     );
   }
 
-  if (!sesion) return null;
+  /*
+   * Sin sesión, o con un rol que no corresponde a esta ruta, no se monta
+   * `children`: si se montara, los listeners de la página se suscribirían a
+   * Firestore antes del redirect y fallarían con `permission-denied`.
+   */
+  if (!sesion || sinAcceso) return null;
 
   return (
     <div className="min-h-screen bg-canvas flex flex-col">

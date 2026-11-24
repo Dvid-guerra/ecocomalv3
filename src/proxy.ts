@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { adminAuth, adminDb } from "@/lib/firebase-admin";
+import { destinoSinAcceso, esRol, puedeEntrar } from "@/lib/acceso";
 
 /**
  * Proxy de Next.js 16 (anteriormente middleware) que actúa como primera línea de defensa.
@@ -27,11 +28,11 @@ export async function proxy(request: NextRequest) {
 
     if (!profile.exists || data?.activo !== true) throw new Error("Cuenta inactiva");
 
-    if (pathname.startsWith("/dashboard/finanzas") && data?.rol !== "Gerente") {
-      const url = request.nextUrl.clone();
-      url.pathname = "/dashboard";
-      url.searchParams.set("acceso", "denegado");
-      return NextResponse.redirect(url);
+    const rol = data?.rol;
+    if (!esRol(rol)) throw new Error("Rol no reconocido");
+
+    if (!puedeEntrar(rol, pathname)) {
+      return NextResponse.redirect(new URL(destinoSinAcceso(rol), request.nextUrl));
     }
 
     return NextResponse.next();

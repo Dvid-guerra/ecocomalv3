@@ -5,6 +5,7 @@ import { Suspense, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import type { Rol } from "@/types";
+import { ROLES, rolesDeRuta } from "@/lib/acceso";
 import {
   Settings,
   FlaskConical,
@@ -29,18 +30,21 @@ interface ModuloConfig {
   icono: React.ReactNode;
   /** Colores del ícono del módulo permitido */
   colorFondo: string;
-  /** Roles con acceso. Undefined = todos */
-  rolesPermitidos?: Rol[];
-  /** Etiqueta informativa del acceso requerido */
-  etiquetaRol?: string;
+  /** Roles con acceso. Derivado de la política de `@/lib/acceso` según `href`. */
+  rolesPermitidos: readonly Rol[];
+  /** Etiqueta informativa del acceso requerido. Derivada de `rolesPermitidos`. */
+  etiquetaRol: string;
   /** Hace que la tarjeta ocupe más espacio en el grid */
   destacado?: boolean;
 }
 
+/** Lo que se escribe a mano: el acceso no se declara aquí, se deriva. */
+type ModuloBase = Omit<ModuloConfig, "rolesPermitidos" | "etiquetaRol">;
+
 /* ─────────────────────────────────────────────
    Configuración de módulos
 ───────────────────────────────────────────── */
-const MODULOS: ModuloConfig[] = [
+const MODULOS_BASE: ModuloBase[] = [
   {
     id: "planta",
     titulo: "Planta de Trabajo",
@@ -49,7 +53,6 @@ const MODULOS: ModuloConfig[] = [
     href: "/dashboard/planta",
     icono: <FlaskConical className="w-6 h-6" strokeWidth={1.5} />,
     colorFondo: "bg-brand-dark",
-    rolesPermitidos: undefined, // todos los roles
     destacado: true,
   },
   {
@@ -60,8 +63,6 @@ const MODULOS: ModuloConfig[] = [
     href: "/dashboard/administracion",
     icono: <Settings className="w-6 h-6" strokeWidth={1.5} />,
     colorFondo: "bg-action",
-    rolesPermitidos: ["Gerente", "Subgerente", "Supervisor"],
-    etiquetaRol: "Gerente / Sub / Sup",
   },
   {
     id: "finanzas",
@@ -71,8 +72,6 @@ const MODULOS: ModuloConfig[] = [
     href: "/dashboard/finanzas",
     icono: <TrendingUp className="w-6 h-6" strokeWidth={1.5} />,
     colorFondo: "bg-brand-earth",
-    rolesPermitidos: ["Gerente"],
-    etiquetaRol: "Exclusivo Gerente",
   },
   {
     id: "ventas",
@@ -82,8 +81,6 @@ const MODULOS: ModuloConfig[] = [
     href: "/dashboard/ventas",
     icono: <Package className="w-6 h-6" strokeWidth={1.5} />,
     colorFondo: "bg-action",
-    rolesPermitidos: ["Gerente", "Subgerente", "Supervisor"],
-    etiquetaRol: "Gerente / Sub / Sup",
   },
   {
     id: "entregas",
@@ -93,8 +90,6 @@ const MODULOS: ModuloConfig[] = [
     href: "/dashboard/entregas",
     icono: <Map className="w-6 h-6" strokeWidth={1.5} />,
     colorFondo: "bg-brand-earth",
-    rolesPermitidos: ["Gerente", "Subgerente", "Supervisor"],
-    etiquetaRol: "Gerente / Sub / Sup",
   },
   {
     id: "inventario",
@@ -104,10 +99,20 @@ const MODULOS: ModuloConfig[] = [
     href: "/dashboard/inventario",
     icono: <Package className="w-6 h-6" strokeWidth={1.5} />,
     colorFondo: "bg-brand-dark",
-    rolesPermitidos: ["Gerente", "Subgerente", "Supervisor"],
-    etiquetaRol: "Gerente / Sub / Sup",
   },
 ];
+
+/**
+ * El acceso de cada tarjeta sale de la misma política que aplican el proxy y el
+ * layout, para que el hub no pueda ofrecer un módulo que la ruta va a rechazar.
+ */
+const etiquetaDeRoles = (roles: readonly Rol[]): string =>
+  roles.length === 1 ? `Exclusivo ${roles[0]}` : "Gerente / Sub / Sup";
+
+const MODULOS: ModuloConfig[] = MODULOS_BASE.map(base => {
+  const rolesPermitidos = rolesDeRuta(base.href) ?? ROLES;
+  return { ...base, rolesPermitidos, etiquetaRol: etiquetaDeRoles(rolesPermitidos) };
+});
 
 /* ─────────────────────────────────────────────
    Badge de rol
@@ -323,7 +328,7 @@ function TarjetaBloqueada({
 ───────────────────────────────────────────── */
 function BentoGrid({ rolUsuario }: { rolUsuario: Rol }) {
   const tieneAcceso = (modulo: ModuloConfig) =>
-    !modulo.rolesPermitidos || modulo.rolesPermitidos.includes(rolUsuario);
+    modulo.rolesPermitidos.includes(rolUsuario);
 
   /*
    * Layout asimétrico 4 tarjetas:
