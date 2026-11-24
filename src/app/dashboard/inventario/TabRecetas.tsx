@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { guardarReceta, suscribirRecetas } from "@/features/inventory/services/recetas";
+import { alFallarListener } from "@/lib/firestore-errores";
 import { Trash2, Save, Wand2, Edit3, X, Plus, ChevronDown, ChevronRight, PackageOpen } from "lucide-react";
 import type { Material, ProductoReceta, RecetaPieza } from "@/types";
 import { MODELOS } from "@/types";
@@ -17,7 +18,7 @@ export default function TabRecetas({ materiales }: { materiales: Material[] }) {
   const [expandedPieza, setExpandedPieza] = useState<number | null>(null);
 
   useEffect(() => {
-    return suscribirRecetas(setRecetas);
+    return suscribirRecetas(setRecetas, alFallarListener("inventario-recetas: recetas"));
   }, []);
 
   const openEditor = (modelo: string) => {

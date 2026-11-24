@@ -5,11 +5,16 @@ import Link from "next/link";
 import { ClipboardList } from "lucide-react";
 import { mesAuditoria, nombreMes } from "../domain/auditoria";
 import { fechaCorta, suscribirAuditorias, type Auditoria } from "../services/auditorias";
+import { alFallarListener } from "@/lib/firestore-errores";
 
 /** Recordatorio de la auditoría mensual en la pantalla de Inventario. */
 export default function AvisoAuditoria() {
   const [auditorias, setAuditorias] = useState<Auditoria[] | null>(null);
-  useEffect(() => suscribirAuditorias(setAuditorias, () => setAuditorias([]), 6), []);
+  // Si no se puede leer, el recordatorio simplemente no se muestra, pero el fallo queda en consola.
+  useEffect(
+    () => suscribirAuditorias(setAuditorias, alFallarListener("aviso-auditoria: auditorias_inventario", () => setAuditorias([])), 6),
+    [],
+  );
   if (!auditorias) return null;
 
   const enCurso = auditorias.find(a => a.estado === "en_curso");

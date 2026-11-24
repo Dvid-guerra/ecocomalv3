@@ -7,6 +7,7 @@ import { AlertTriangle, ArrowRight, Box, ChevronDown, Layers } from "lucide-reac
 import { db } from "@/lib/firebase";
 import { MODELOS, type Material, type ProductoReceta, type RecetaInsumo } from "@/types";
 import { suscribirRecetas } from "../services/recetas";
+import { alFallarListener } from "@/lib/firestore-errores";
 import {
   calcularCapacidad,
   calcularCostoUnitario,
@@ -34,7 +35,7 @@ export default function ResumenRecetas() {
   const [verAntiguas, setVerAntiguas] = useState(false);
 
   useEffect(() => {
-    const onError = (e: Error) => { console.error(e); setSinPermiso(true); };
+    const onError = alFallarListener("resumen-recetas", () => setSinPermiso(true));
     const unsubRec = suscribirRecetas(setRecetas, onError);
     const unsubMat = onSnapshot(
       collection(db, "materiales"),

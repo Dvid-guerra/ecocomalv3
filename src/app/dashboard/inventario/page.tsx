@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
+import { alFallarListener } from "@/lib/firestore-errores";
 import { collection, onSnapshot, addDoc, doc, updateDoc, deleteDoc } from "firebase/firestore";
 import Link from "next/link";
 import { Package, Truck, Plus, Trash2, Printer, Save, CheckCircle, Database, AlertTriangle, Pencil, ScanLine, Tags, ClipboardList } from "lucide-react";
@@ -45,16 +46,16 @@ export default function InventarioPage() {
 
     const unSubProv = onSnapshot(collection(db, "proveedores"), (snap) => {
       setProveedores(snap.docs.map(d => ({ id: d.id, ...d.data() } as Proveedor)));
-    });
+    }, alFallarListener("inventario: proveedores"));
 
     const unSubMat = onSnapshot(collection(db, "materiales"), (snap) => {
       setMateriales(snap.docs.map(d => ({ id: d.id, ...d.data() } as Material)));
-    });
+    }, alFallarListener("inventario: materiales"));
 
     const unSubOrd = onSnapshot(collection(db, "ordenes_compra"), (snap) => {
       // Mantiene activa la suscripción para reflejar futuras órdenes.
       void snap.docs.map(d => ({ id: d.id, ...d.data() } as OrdenCompra));
-    });
+    }, alFallarListener("inventario: ordenes_compra"));
 
     return () => {
       unSubProv();

@@ -17,6 +17,7 @@ import {
   getDocs,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { alFallarListener } from "@/lib/firestore-errores";
 import type {
   Cliente,
   Pedido,
@@ -368,7 +369,7 @@ function TabClientes({
         }))
       );
       setLoading(false);
-    });
+    }, alFallarListener("ventas: clientes"));
     return () => unsub();
   }, []);
 
@@ -783,7 +784,7 @@ function TabPedidos({
         }))
       );
       setLoading(false);
-    });
+    }, alFallarListener("ventas: pedidos"));
     const q2 = query(collection(db, "clientes"), orderBy("nombre"));
     const u2 = onSnapshot(q2, (snap) => {
       setClientes(
@@ -792,7 +793,7 @@ function TabPedidos({
           ...(d.data() as Omit<Cliente, "id">),
         }))
       );
-    });
+    }, alFallarListener("ventas: clientes"));
     return () => {
       u1();
       u2();
@@ -1368,7 +1369,7 @@ function TabEnvios() {
         }))
       );
       setLoading(false);
-    });
+    }, alFallarListener("ventas: envios"));
     return () => unsub();
   }, []);
 

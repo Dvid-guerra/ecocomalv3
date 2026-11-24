@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { BrandLogo } from "@/components/BrandLogo";
 import { db } from "@/lib/firebase";
+import { alFallarListener } from "@/lib/firestore-errores";
 import { 
   collection, 
   addDoc, 
@@ -271,7 +272,7 @@ export default function EmpleadoPortalPage() {
         setIdAsistenciaActiva(null);
         setHoraEntrada(null);
       }
-    });
+    }, alFallarListener("portal: asistencias"));
 
     return () => unsub();
   }, [sesion]);
@@ -293,7 +294,7 @@ export default function EmpleadoPortalPage() {
         completada: d.data().completada ?? false,
       }));
       setTareas(lista);
-    });
+    }, alFallarListener("portal: tareas_planta"));
     return () => unsub();
   }, [sesion]);
   
@@ -314,7 +315,7 @@ export default function EmpleadoPortalPage() {
         ...d.data()
       })) as BloqueSemanal[];
       setBloquesSemana(lista);
-    });
+    }, alFallarListener("portal: planificacion_semanal"));
     return () => unsub();
   }, [sesion]);
 

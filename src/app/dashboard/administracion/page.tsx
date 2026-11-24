@@ -12,6 +12,7 @@ import {
   orderBy
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { alFallarListener } from "@/lib/firestore-errores";
 import { useAuth } from "@/context/AuthContext";
 import { Rol, UsuarioAdmin } from "@/types";
 import {
@@ -414,7 +415,7 @@ function TabAsistencias() {
 
       setAsistencias(lista);
       setCargando(false);
-    });
+    }, alFallarListener("administracion: asistencias"));
 
     return () => unsub();
   }, []);
@@ -543,7 +544,7 @@ function TabPermisos() {
       });
       setPermisos(lista);
       setCargando(false);
-    });
+    }, alFallarListener("administracion: permisos"));
 
     return () => unsub();
   }, []);

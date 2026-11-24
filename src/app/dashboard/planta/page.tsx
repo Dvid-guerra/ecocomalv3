@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
+import { alFallarListener } from "@/lib/firestore-errores";
 import { 
   collection, 
   onSnapshot, 
@@ -178,7 +179,7 @@ export default function PlantaPage() {
         areaPlanta: d.data().areaPlanta ?? "",
       }));
       setColaboradores(lista);
-    });
+    }, alFallarListener("planta: usuarios"));
 
     // 3. Escuchar Tareas
     const qTareas = query(collection(db, "tareas_planta"));
@@ -192,7 +193,7 @@ export default function PlantaPage() {
         fecha: d.data().fecha ?? hoy(),
       }));
       setTareasGlobales(lista);
-    });
+    }, alFallarListener("planta: tareas_planta"));
 
     // 4. Escuchar Stock de Inventario
     const unsubStock = onSnapshot(collection(db, "inventario_stock"), (snap) => {
@@ -203,7 +204,7 @@ export default function PlantaPage() {
         cantidad: lista.find(s => s.modelo === m)?.cantidad ?? 0
       }));
       setStock(stockFinal);
-    });
+    }, alFallarListener("planta: inventario_stock"));
 
     // 5. Escuchar Movimientos de Inventario
     const qMovs = query(collection(db, "inventario_movimientos"));
@@ -222,7 +223,7 @@ export default function PlantaPage() {
         return b.fecha.localeCompare(a.fecha);
       });
       setMovimientos(lista);
-    });
+    }, alFallarListener("planta: inventario_movimientos"));
 
     // 6. Escuchar Bloques Semanales
     const unsubBloques = onSnapshot(collection(db, "planificacion_semanal"), (snap) => {
@@ -239,7 +240,7 @@ export default function PlantaPage() {
         notas: d.data().notas ?? "",
       }));
       setBloquesSemanales(lista);
-    });
+    }, alFallarListener("planta: planificacion_semanal"));
 
     return () => {
       unsubUsuarios();

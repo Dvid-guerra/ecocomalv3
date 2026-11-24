@@ -14,6 +14,7 @@ import {
   setDoc,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { alFallarListener } from "@/lib/firestore-errores";
 import { useAuth } from "@/context/AuthContext";
 import {
   MODELOS,
@@ -839,7 +840,7 @@ function AnalisisProduccion({
         }))
       );
       setCargando(false);
-    });
+    }, alFallarListener("finanzas: registros_produccion"));
     return () => unsub();
   }, []);
 
@@ -1192,7 +1193,7 @@ function PlanillasPanel({ sesionUid }: { sesionUid: string }) {
         .filter(a => a.fecha >= startDate && a.fecha <= endDate);
       setAsistencias(data);
       setCargando(false);
-    });
+    }, alFallarListener("finanzas: asistencias"));
     return () => unsub();
   }, [quincena]);
 
@@ -1376,11 +1377,11 @@ function ConfiguracionFinanciera() {
           actualizadoEn: serverTimestamp()
         });
       }
-    });
+    }, alFallarListener("finanzas: configuracion"));
     const unsubMat = onSnapshot(collection(db, "materiales"), (snap) => {
       setMateriales(snap.docs.map(d => ({ id: d.id, ...d.data() } as Material)));
-    });
-    const unsubRec = suscribirRecetas(setRecetas);
+    }, alFallarListener("finanzas: materiales"));
+    const unsubRec = suscribirRecetas(setRecetas, alFallarListener("finanzas: recetas"));
 
     return () => { unsubConf(); unsubMat(); unsubRec(); };
   }, []);
@@ -1615,7 +1616,7 @@ export default function FinanzasPage() {
           url_pdf:        d.data().url_pdf,
         }))
       );
-    });
+    }, alFallarListener("finanzas: facturas"));
     return () => unsub();
   }, [sesion]);
 

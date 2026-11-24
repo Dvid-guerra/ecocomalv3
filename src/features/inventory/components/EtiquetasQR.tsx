@@ -6,6 +6,7 @@ import { collection, onSnapshot } from "firebase/firestore";
 import QRCode from "qrcode";
 import { ArrowLeft, Printer } from "lucide-react";
 import { db } from "@/lib/firebase";
+import { alFallarListener } from "@/lib/firestore-errores";
 import type { Material } from "@/types";
 import { esFamilia, FAMILIAS, LISTA_FAMILIAS, urlEtiqueta } from "../domain/materiales";
 
@@ -22,7 +23,7 @@ export default function EtiquetasQR() {
         .map(d => ({ id: d.id, ...d.data() }) as Material)
         .sort((a, b) => (a.ubicacion ?? "~").localeCompare(b.ubicacion ?? "~") || a.nombre.localeCompare(b.nombre, "es")),
     );
-  }), []);
+  }, alFallarListener("etiquetas: materiales")), []);
 
   // Por defecto se marcan los que ya tienen ubicación (los que van en una gaveta).
   const marcados = useMemo(

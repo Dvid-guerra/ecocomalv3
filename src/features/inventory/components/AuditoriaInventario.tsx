@@ -5,6 +5,7 @@ import Link from "next/link";
 import { collection, onSnapshot } from "firebase/firestore";
 import { ArrowLeft, CheckCircle2, ClipboardList, Circle } from "lucide-react";
 import { db } from "@/lib/firebase";
+import { alFallarListener } from "@/lib/firestore-errores";
 import { useAuth } from "@/context/AuthContext";
 import type { Material } from "@/types";
 import { mesAuditoria, nombreMes, resumirAuditoria, type ResumenAuditoria } from "../domain/auditoria";
@@ -33,8 +34,12 @@ export default function AuditoriaInventario() {
       suscribirAuditorias(a => {
         setAuditorias(a);
         setCargando(false);
-      }, () => setError("No se pudieron cargar las auditorías.")),
-      onSnapshot(collection(db, "materiales"), snap => setMateriales(snap.docs.map(d => ({ id: d.id, ...d.data() }) as Material))),
+      }, alFallarListener("auditoria: auditorias_inventario", mensaje => {
+        // Sin apagar `cargando` la pantalla se queda en "Cargando…" para siempre.
+        setError(mensaje);
+        setCargando(false);
+      })),
+      onSnapshot(collection(db, "materiales"), snap => setMateriales(snap.docs.map(d => ({ id: d.id, ...d.data() }) as Material)), alFallarListener("auditoria: materiales", setError)),
     ];
     return () => unsubs.forEach(u => u());
   }, []);

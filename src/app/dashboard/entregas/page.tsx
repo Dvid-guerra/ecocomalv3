@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
+import { alFallarListener } from "@/lib/firestore-errores";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { ComposableMap, Geographies, Geography, ZoomableGroup } from "react-simple-maps";
 import { scaleLinear } from "d3-scale";
@@ -77,15 +78,15 @@ export default function EntregasPage() {
     const qEnvios = query(collection(db, "envios"), where("estado", "==", "Entregado"));
     const unSubEnvios = onSnapshot(qEnvios, (snap) => {
       setEnvios(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Envio)));
-    });
+    }, alFallarListener("entregas: envios"));
 
     const unSubPedidos = onSnapshot(collection(db, "pedidos"), (snap) => {
       setPedidos(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Pedido)));
-    });
+    }, alFallarListener("entregas: pedidos"));
 
     const unSubClientes = onSnapshot(collection(db, "clientes"), (snap) => {
       setClientes(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Cliente)));
-    });
+    }, alFallarListener("entregas: clientes"));
 
     return () => {
       unSubEnvios();
