@@ -86,10 +86,18 @@ service cloud.firestore {
       allow delete: if manager();
     }
 
+    // El Colaborador marca el avance de SUS tareas desde /empleado/portal, pero
+    // solo el campo `completada`: no puede reasignarse una tarea ni cambiarle la
+    // descripción o la prioridad. Quien las crea y las borra es Planta.
     match /tareas_planta/{id} {
       allow read: if operational()
         || (active() && resource.data.empleadoId == request.auth.uid);
-      allow create, update, delete: if operational();
+      allow create, delete: if operational();
+      allow update: if operational()
+        || (active()
+          && resource.data.empleadoId == request.auth.uid
+          && request.resource.data.diff(resource.data)
+            .affectedKeys().hasOnly(['completada']));
     }
 
     match /inventario_stock/{id} {
